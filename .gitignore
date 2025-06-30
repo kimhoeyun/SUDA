@@ -1,11 +1,26 @@
+# === 기본 생성 파일 ===
 HELP.md
+
+# === Gradle ===
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
-!**/src/main/**/build/
-!**/src/test/**/build/
 
-### STS ###
+# 하위 빌드 폴더 무시 (대체로 불필요하므로 주석 처리 가능)
+# !**/src/main/**/build/
+# !**/src/test/**/build/
+
+# === Spring Boot 설정 파일 (보안상 제외 권장) ===
+/src/main/resources/application.yml
+/src/main/resources/application.properties
+
+# === Logs, temp, OS-specific ===
+*.log
+*.tmp
+*.swp
+.DS_Store
+
+# === STS (Spring Tool Suite) ===
 .apt_generated
 .classpath
 .factorypath
@@ -17,7 +32,7 @@ bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
 
-### IntelliJ IDEA ###
+# === IntelliJ IDEA ===
 .idea
 *.iws
 *.iml
@@ -26,12 +41,12 @@ out/
 !**/src/main/**/out/
 !**/src/test/**/out/
 
-### NetBeans ###
+# === NetBeans ===
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
 
-### VS Code ###
+# === VS Code ===
 .vscode/
