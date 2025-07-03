@@ -1,5 +1,6 @@
 package com.suda.domain.meal.entity;
 
+import com.suda.domain.cafeteria.entity.Cafeteria;
 import com.suda.domain.weekday.entity.Weekday;
 import jakarta.persistence.*;
 import org.springframework.data.annotation.CreatedDate;
