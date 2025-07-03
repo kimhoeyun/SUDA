@@ -29,4 +29,15 @@ public class Meal {
     @CreatedDate
     @Column(updatable = false)
     private LocalDateTime createdAt;
+
+    public Meal(Cafeteria cafeteria, Weekday weekday, String mealTime, String menu) {
+        this.cafeteria = cafeteria;
+        this.weekday = weekday;
+        this.mealTime = mealTime;
+        this.menu = menu;
+    }
+
+    public Meal() {
+
+    }
 }
