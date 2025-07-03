@@ -1,4 +1,10 @@
 package com.suda.domain.weekday.repository;
 
-public class WeekdayRepository {
+import com.suda.domain.weekday.entity.Weekday;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+
+public interface WeekdayRepository extends JpaRepository<Weekday, Long> {
+    Optional<Weekday> findByName(String name);
 }

@@ -1,5 +1,6 @@
 package com.suda.domain.meal.entity;
 
+import com.suda.domain.cafeteria.entity.Cafeteria;
 import com.suda.domain.weekday.entity.Weekday;
 import jakarta.persistence.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -28,4 +29,15 @@ public class Meal {
     @CreatedDate
     @Column(updatable = false)
     private LocalDateTime createdAt;
+
+    public Meal(Cafeteria cafeteria, Weekday weekday, String mealTime, String menu) {
+        this.cafeteria = cafeteria;
+        this.weekday = weekday;
+        this.mealTime = mealTime;
+        this.menu = menu;
+    }
+
+    public Meal() {
+
+    }
 }
