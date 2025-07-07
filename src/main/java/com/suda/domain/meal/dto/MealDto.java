@@ -8,6 +8,6 @@ import lombok.Getter;
 public class MealDto {
     private String weekday;
     private String cafeteriaName;
-    private String mealTime;
+    private String mealType;
     private String menu;
 }

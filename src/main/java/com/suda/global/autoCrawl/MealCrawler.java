@@ -44,7 +44,7 @@ public class MealCrawler {
 
                 result.add(MealDto.builder()
                         .cafeteriaName("교직원식당")
-                        .mealTime(mealTime)
+                        .mealType(mealTime)
                         .weekday(days[i - 1])
                         .menu(menu)
                         .build());
