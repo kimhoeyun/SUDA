@@ -12,6 +12,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -22,7 +24,6 @@ public class MealService {
     private final CafeteriaRepository cafeteriaRepository;
     private final WeekdayRepository weekdayRepository;
     private final MealCrawler mealCrawler;
-
 
     @Transactional
     public void saveWeeklyMeals() {
@@ -41,10 +42,38 @@ public class MealService {
                     Weekday weekday = weekdayRepository.findByName(dto.getWeekday())
                             .orElseThrow(() -> new IllegalArgumentException("요일 없음: " + dto.getWeekday()));
 
-                    return new Meal(cafeteria, weekday, dto.getMealTime(), dto.getMenu());
+                    return new Meal(cafeteria, weekday, dto.getMealType(), dto.getMenu());
                 })
                 .toList();
 
         mealRepository.saveAll(meals);
+    }
+
+    @Transactional
+    public List<MealDto> getTodayMeals() {
+        String today = convertToKoreanWeekday(LocalDate.now().getDayOfWeek());
+
+        List<Meal> meals = mealRepository.findAllByWeekday_Name(today);
+
+        return meals.stream()
+                .map(meal -> MealDto.builder()
+                        .weekday(meal.getWeekday().getName())
+                        .cafeteriaName(meal.getCafeteria().getName())
+                        .mealType(meal.getMealType())
+                        .menu(meal.getMenu())
+                        .build())
+                .toList();
+    }
+
+    private static String convertToKoreanWeekday(DayOfWeek dayOfWeek) {
+        return switch (dayOfWeek) {
+            case MONDAY -> "월";
+            case TUESDAY -> "화";
+            case WEDNESDAY -> "수";
+            case THURSDAY -> "목";
+            case FRIDAY -> "금";
+            case SATURDAY -> "토";
+            case SUNDAY -> "일";
+        };
     }
 }
