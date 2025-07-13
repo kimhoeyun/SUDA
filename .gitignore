@@ -3,7 +3,11 @@ HELP.md
 
 # === Gradle ===
 .gradle
-build/
+build/*
+!build/libs/
+!build/libs/*.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
 !gradle/wrapper/gradle-wrapper.jar
 
 # 하위 빌드 폴더 무시 (대체로 불필요하므로 주석 처리 가능)
