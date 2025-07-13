@@ -24,7 +24,7 @@ public class MealController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/today")
+    @PostMapping("/today")
     public List<MealDto> getTodayMeals() {
         return mealService.getTodayMeals();
     }
