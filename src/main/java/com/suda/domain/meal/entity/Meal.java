@@ -1,14 +1,11 @@
 package com.suda.domain.meal.entity;
 
 import com.suda.domain.cafeteria.entity.Cafeteria;
-import com.suda.domain.weekday.entity.Weekday;
+
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Getter
