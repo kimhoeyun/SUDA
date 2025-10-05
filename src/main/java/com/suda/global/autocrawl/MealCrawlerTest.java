@@ -1,4 +1,4 @@
-package com.suda.global.autoCrawl;
+package com.suda.global.autocrawl;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;

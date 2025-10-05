@@ -1,4 +1,4 @@
-package com.suda.global.autoCrawl;
+package com.suda.global.autocrawl;
 
 import com.suda.domain.meal.dto.MealDto;
 import org.jsoup.Jsoup;
