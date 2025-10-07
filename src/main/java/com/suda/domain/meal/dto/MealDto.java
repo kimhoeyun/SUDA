@@ -6,8 +6,7 @@ import lombok.Getter;
 @Getter
 @Builder
 public class MealDto {
-    private String weekday;
+    private String dayOfWeek;
     private String cafeteriaName;
-    private String mealType;
     private String menu;
 }
