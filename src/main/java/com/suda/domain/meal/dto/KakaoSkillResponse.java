@@ -7,7 +7,7 @@ import java.util.List;
 
 @Getter
 @Builder
-public class ㅅ {
+public class KakaoSkillResponse {
     private String version;
     private Template template;
 
