@@ -16,7 +16,7 @@ public class KakaoMealController {
 
     private final MealService mealService;
 
-    @GetMapping
+    @PostMapping
     public KakaoSkillResponse getMealsByDay(
             @RequestBody KakaoSkillRequest request
     ) {
