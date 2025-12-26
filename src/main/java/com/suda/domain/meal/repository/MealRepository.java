@@ -1,6 +1,6 @@
 package com.suda.domain.meal.repository;
 
-import com.suda.domain.meal.entity.DayOfWeek;
+import java.time.DayOfWeek;
 import com.suda.domain.meal.entity.Meal;
 import org.springframework.data.jpa.repository.JpaRepository;
 
