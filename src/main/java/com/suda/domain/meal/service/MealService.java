@@ -5,15 +5,13 @@ import com.suda.domain.cafeteria.repository.CafeteriaRepository;
 import com.suda.domain.meal.dto.MealDto;
 import com.suda.domain.meal.entity.Meal;
 import com.suda.domain.meal.repository.MealRepository;
-import com.suda.domain.weekday.entity.Weekday;
-import com.suda.domain.weekday.repository.WeekdayRepository;
-import com.suda.global.autoCrawl.MealCrawler;
-import jakarta.transaction.Transactional;
+import com.suda.global.autocrawl.MealCrawler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.time.DayOfWeek;
-import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -22,58 +20,73 @@ public class MealService {
 
     private final MealRepository mealRepository;
     private final CafeteriaRepository cafeteriaRepository;
-    private final WeekdayRepository weekdayRepository;
     private final MealCrawler mealCrawler;
 
+    // 크롤링 후 저장
     @Transactional
-    public void saveWeeklyMeals() {
-        List<MealDto> mealDtos;
-        try {
-            mealDtos = mealCrawler.fetchMeals();
-        } catch (Exception e) {
-            throw new RuntimeException("크롤링 실패", e);
-        }
+    public List<Meal> crawlAndSaveMeals() throws IOException {
+        List<MealDto> mealDtos = mealCrawler.fetchAllMeals();
 
         List<Meal> meals = mealDtos.stream()
                 .map(dto -> {
                     Cafeteria cafeteria = cafeteriaRepository.findByName(dto.getCafeteriaName())
-                            .orElseThrow(() -> new IllegalArgumentException("식당 없음: " + dto.getCafeteriaName()));
+                            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 식당: " + dto.getCafeteriaName()));
 
-                    Weekday weekday = weekdayRepository.findByName(dto.getWeekday())
-                            .orElseThrow(() -> new IllegalArgumentException("요일 없음: " + dto.getWeekday()));
-
-                    return new Meal(cafeteria, weekday, dto.getMealType(), dto.getMenu());
+                    DayOfWeek dayOfWeek = parseDayOfWeek(dto.getDayOfWeek());
+                    return new Meal(cafeteria, dayOfWeek, dto.getMenu());
                 })
                 .toList();
 
-        mealRepository.saveAll(meals);
+        List<Meal> saved = mealRepository.saveAll(meals);
+        return saved;
     }
 
-    @Transactional
-    public List<MealDto> getTodayMeals() {
-        String today = convertToKoreanWeekday(LocalDate.now().getDayOfWeek());
+    // 요일 구분
+    private DayOfWeek parseDayOfWeek(String koreanDay) {
+        return switch (koreanDay) {
+            case "월", "월요일" -> DayOfWeek.MONDAY;
+            case "화", "화요일" -> DayOfWeek.TUESDAY;
+            case "수", "수요일" -> DayOfWeek.WEDNESDAY;
+            case "목", "목요일" -> DayOfWeek.THURSDAY;
+            case "금", "금요일" -> DayOfWeek.FRIDAY;
+            default -> throw new IllegalArgumentException("잘못된 요일 값: " + koreanDay);
+        };
+    }
 
-        List<Meal> meals = mealRepository.findAllByWeekday_Name(today);
+    // 요일 한글 변환
+    private String toKoreanDay(DayOfWeek dayOfWeek) {
+        return switch (dayOfWeek) {
+            case MONDAY -> "월요일";
+            case TUESDAY -> "화요일";
+            case WEDNESDAY -> "수요일";
+            case THURSDAY -> "목요일";
+            case FRIDAY -> "금요일";
+            default -> throw new IllegalArgumentException("지원하지 않는 요일");
+        };
+    }
 
-        return meals.stream()
+    // 요일별 학식 제공
+    @Transactional(readOnly = true)
+    public List<MealDto> getMealsByDay(String koreanDay) {
+        DayOfWeek dayOfWeek = parseDayOfWeek(koreanDay);
+
+        return mealRepository.findAllByDayOfWeek(dayOfWeek)
+                .stream()
                 .map(meal -> MealDto.builder()
-                        .weekday(meal.getWeekday().getName())
+                        .dayOfWeek(toKoreanDay(meal.getDayOfWeek())) // MONDAY, FRIDAY 등
                         .cafeteriaName(meal.getCafeteria().getName())
-                        .mealType(meal.getMealType())
                         .menu(meal.getMenu())
-                        .build())
+                        .build()
+                )
                 .toList();
     }
 
-    private static String convertToKoreanWeekday(DayOfWeek dayOfWeek) {
-        return switch (dayOfWeek) {
-            case MONDAY -> "월";
-            case TUESDAY -> "화";
-            case WEDNESDAY -> "수";
-            case THURSDAY -> "목";
-            case FRIDAY -> "금";
-            case SATURDAY -> "토";
-            case SUNDAY -> "일";
-        };
+    // Meal 엔티티 → MealDto 변환
+    private MealDto toMealDto(Meal meal) {
+        return MealDto.builder()
+                .dayOfWeek(toKoreanDay(meal.getDayOfWeek()))
+                .cafeteriaName(meal.getCafeteria().getName())
+                .menu(meal.getMenu())
+                .build();
     }
 }

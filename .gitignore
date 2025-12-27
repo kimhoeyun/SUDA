@@ -2,17 +2,13 @@
 HELP.md
 
 # === Gradle ===
-.gradle
-build/*
-!build/libs/
-!build/libs/*.jar
-!**/src/main/**/build/
-!**/src/test/**/build/
-!gradle/wrapper/gradle-wrapper.jar
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar  # Gradle Wrapper만 예외
 
-# 하위 빌드 폴더 무시 (대체로 불필요하므로 주석 처리 가능)
-# !**/src/main/**/build/
-# !**/src/test/**/build/
+# === JAR 파일 ===
+*.jar
+!gradle/wrapper/gradle-wrapper.jar  # wrapper jar만 추적 허용
 
 # === Spring Boot 설정 파일 (보안상 제외 권장) ===
 /src/main/resources/application.yml
@@ -29,15 +25,15 @@ build/*
 .classpath
 .factorypath
 .project
-.settings
+.settings/
 .springBeans
-.sts4-cache
+.sts4-cache/
 bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
 
 # === IntelliJ IDEA ===
-.idea
+.idea/
 *.iws
 *.iml
 *.ipr
