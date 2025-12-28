@@ -3,6 +3,7 @@ package com.suda.domain.meal.service;
 import com.suda.domain.cafeteria.entity.Cafeteria;
 import com.suda.domain.cafeteria.repository.CafeteriaRepository;
 import com.suda.domain.meal.dto.MealDto;
+import com.suda.domain.meal.dto.MealResponseDto;
 import com.suda.domain.meal.entity.Meal;
 import com.suda.domain.meal.repository.MealRepository;
 import com.suda.global.autocrawl.MealCrawler;
@@ -25,6 +26,10 @@ public class MealService {
     // 크롤링 후 저장
     @Transactional
     public List<Meal> crawlAndSaveMeals() throws IOException {
+
+        // 기존 데이터 전체 삭제
+        mealRepository.deleteAll();
+
         List<MealDto> mealDtos = mealCrawler.fetchAllMeals();
 
         List<Meal> meals = mealDtos.stream()
@@ -39,6 +44,20 @@ public class MealService {
 
         List<Meal> saved = mealRepository.saveAll(meals);
         return saved;
+    }
+
+    // 크롤링 결과 응답 DTO로 변환
+    @Transactional
+    public List<MealResponseDto> crawlAndSaveMealsAsDto() throws IOException {
+        List<Meal> savedMeals = crawlAndSaveMeals();
+
+        return savedMeals.stream()
+                .map(meal -> MealResponseDto.builder()
+                        .cafeteriaName(meal.getCafeteria().getName())
+                        .dayOfWeek(toKoreanDay(meal.getDayOfWeek()))
+                        .menu(meal.getMenu())
+                        .build())
+                .toList();
     }
 
     // 요일 구분

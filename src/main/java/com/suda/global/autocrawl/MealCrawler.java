@@ -45,51 +45,51 @@ public class MealCrawler {
 
     private List<MealDto> fetchMealsForTarget(Document doc, MealTarget target) {
         Element table = doc.selectFirst(target.getCssSelector());
-
         if (table == null) {
-            throw new IllegalStateException(
-                    "테이블을 찾을 수 없습니다. (식당: " + target.getCafeteriaName() + ", 셀렉터: " + target.getCssSelector() + ")"
-            );
+            throw new IllegalStateException("테이블 없음: " + target.getCafeteriaName());
         }
 
         Elements trs = table.select("tbody > tr");
-        if (trs.isEmpty()) {
-            throw new IllegalStateException(
-                    "테이블 내 TR(행) 요소가 없습니다. (식당: " + target.getCafeteriaName() + ")"
-            );
-        }
 
         List<MealDto> result = new ArrayList<>();
 
-        for (Element tr : trs) {
-            Elements tds = tr.select("td");
+        for (int dayIndex = 1; dayIndex <= 5; dayIndex++) {
+            String day = WEEKDAYS[dayIndex - 1];
+            StringBuilder menuBuilder = new StringBuilder();
 
-            if (tds.size() < 6) {
-                continue;
+            for (Element tr : trs) {
+                Elements tds = tr.select("td");
+                if (tds.size() <= dayIndex) continue;
+
+                String menu = cleanMenuHtml(tds.get(dayIndex).html());
+                if (!menu.isBlank()) {
+                    menuBuilder.append(menu).append("\n");
+                }
             }
 
-            IntStream.rangeClosed(1, 5)
-                    .forEach(i -> {
-                        String menuHtml = tds.get(i).html();
-                        String menu = cleanMenuHtml(menuHtml);
-                        String dayOfWeek = WEEKDAYS[i - 1];
-
-                        // 메뉴 내용이 있을 경우에만 DTO 생성 및 추가
-                        if (!menu.isBlank()) {
-                            result.add(MealDto.builder()
-                                    .cafeteriaName(target.getCafeteriaName())
-                                    .dayOfWeek(dayOfWeek)
-                                    .menu(menu)
-                                    .build());
-                        }
-                    });
+            if (!menuBuilder.isEmpty()) {
+                result.add(MealDto.builder()
+                        .cafeteriaName(target.getCafeteriaName())
+                        .dayOfWeek(day)
+                        .menu(menuBuilder.toString().trim())
+                        .build());
+            }
         }
+
         return result;
     }
 
     private String cleanMenuHtml(String html) {
-        return html.replaceAll(REGEX_BR, "\n")
-                .replaceAll(HTML_SPACE, " ")
+        String cleaned = html
+                .replaceAll(REGEX_BR, "\n")
+                .replaceAll("&nbsp;", "")
+                .replaceAll("\\s+", " ")
                 .trim();
+
+        // 의미 없는 값 제거
+        if (cleaned.isEmpty()) return "";
+        if (cleaned.equals("-")) return "";
+
+        return cleaned;
     }
 }
