@@ -9,6 +9,15 @@ import lombok.NoArgsConstructor;
 import java.time.DayOfWeek;
 
 @Entity
+@Table(
+        name = "meal",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_meal_cafeteria_day",
+                        columnNames = {"cafeteria_id", "day_of_week"}
+                )
+        }
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Meal {
