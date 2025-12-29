@@ -17,7 +17,6 @@ import java.util.List;
 public class MealController {
 
     private final MealService mealService;
-
     @GetMapping("/crawl")
     public ResponseEntity<List<Meal>> crawlAndSaveMeals() throws IOException {
         List<Meal> savedMeals = mealService.crawlAndSaveMeals();
