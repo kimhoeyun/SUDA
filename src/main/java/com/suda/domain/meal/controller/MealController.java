@@ -19,8 +19,12 @@ public class MealController {
 
     private final MealService mealService;
 
+    // 홈페이지 크롤링 후 학식 정보를 요일별로 저장
     @GetMapping("/crawl")
     public ResponseEntity<List<MealResponseDto>> crawlAndSaveMeals() throws IOException {
         return ResponseEntity.ok(mealService.crawlAndSaveMealsAsDto());
     }
+
+
+
 }

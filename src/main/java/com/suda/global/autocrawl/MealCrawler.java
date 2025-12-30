@@ -15,6 +15,7 @@ import java.util.stream.IntStream;
 @Component
 public class MealCrawler {
 
+    // 종합강의동 홈페이지 주소
     private static final String URL = "https://www.suwon.ac.kr/index.html?menuno=762";
     private static final String[] WEEKDAYS = {"월", "화", "수", "목", "금"};
 
