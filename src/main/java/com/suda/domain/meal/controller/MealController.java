@@ -25,12 +25,6 @@ public class MealController {
         return ResponseEntity.ok(mealService.crawlAndSaveMealsAsDto());
     }
 
-    // 오늘의 학식 조회 (DB에 저장된 이번 주 데이터에서 오늘 요일만 조회)
-    @GetMapping("/today")
-    public ResponseEntity<List<MealResponseDto>> getTodayMeals() {
-        return ResponseEntity.ok(mealService.getTodayMealsAsDto());
-    }
-
 
 
 }
