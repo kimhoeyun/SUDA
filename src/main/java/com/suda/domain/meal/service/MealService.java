@@ -7,13 +7,18 @@ import com.suda.domain.meal.dto.MealResponseDto;
 import com.suda.domain.meal.entity.Meal;
 import com.suda.domain.meal.repository.MealRepository;
 import com.suda.global.autocrawl.MealCrawler;
+import com.suda.global.autocrawl.MealTarget;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.DayOfWeek;
-import java.util.List;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,7 +34,6 @@ public class MealService {
 
         // 기존 데이터 전체 삭제
         mealRepository.deleteAll();
-
         List<MealDto> mealDtos = mealCrawler.fetchAllMeals();
 
         List<Meal> meals = mealDtos.stream()
@@ -108,4 +112,63 @@ public class MealService {
                 .menu(meal.getMenu())
                 .build();
     }
+
+
+    // 오늘의 학식: DB에서 "오늘 요일"만 조회해서 응답 DTO로 변환
+    @Transactional(readOnly = true)
+    public List<MealResponseDto> getTodayMealsAsDto() {
+
+        DayOfWeek today = LocalDate.now(ZoneId.of("Asia/Seoul")).getDayOfWeek();
+
+
+        // 주말인 경우 학식 정보를 제공 하지 않는다고 출력하기
+        if (today == DayOfWeek.SATURDAY || today == DayOfWeek.SUNDAY) {
+            return List.of(); // 빈 리스트 반환
+        }
+
+        // 오늘 요일의 모든 Meal 조회
+        List<Meal> todayMeals = mealRepository.findAllByDayOfWeek(today);
+
+        // 같은 cafeteria를 기준으로 학식 메뉴 묶어서 저장하기
+        Map<String, String> menuByCafeteriaName = todayMeals.stream()
+                .collect(Collectors.groupingBy(
+                        m -> m.getCafeteria().getName(),
+                        LinkedHashMap::new,
+                        Collectors.mapping(
+                                Meal::getMenu,
+                                Collectors.collectingAndThen(Collectors.toList(), menus -> {
+                                    // 여러 건이면 줄바꿈으로 합치기
+                                    return menus.stream()
+                                            .filter(s -> s != null && !s.isBlank())
+                                            .distinct()
+                                            .collect(Collectors.joining("\n\n"));
+                                })
+                        )
+                ));
+
+        // 학식 정보 출력하기
+        String koreanDay = toKoreanDay(today);
+        String noMenu = "오늘 등록된 메뉴가 없습니다";
+
+
+        List<MealResponseDto> responses = new ArrayList<>();
+        for (MealTarget target : MealTarget.values()) {
+
+            String key = target.getCafeteriaName();
+            String menu = menuByCafeteriaName.getOrDefault(key, "").trim();
+
+            // 학식 정보가 비어있는 경우
+            if (menu.isBlank()) menu = noMenu;
+
+            // 학식 정보 응답 dto 생성
+            responses.add(MealResponseDto.builder()
+                    .cafeteriaName(key)
+                    .dayOfWeek(koreanDay)
+                    .menu(menu)
+                    .build());
+        }
+
+        return responses;
+    }
+
 }

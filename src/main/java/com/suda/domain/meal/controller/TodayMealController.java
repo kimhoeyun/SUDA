@@ -1,3 +1,4 @@
+/*
 package com.suda.domain.meal.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -24,3 +25,4 @@ public class TodayMealController {
         return todayMealService.buildTodayMealKakaoResponse();
     }
 }
+*/

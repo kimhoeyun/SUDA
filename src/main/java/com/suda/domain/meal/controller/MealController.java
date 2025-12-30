@@ -18,8 +18,19 @@ import java.util.List;
 public class MealController {
 
     private final MealService mealService;
+
+    // 홈페이지 크롤링 후 학식 정보를 요일별로 저장
     @GetMapping("/crawl")
     public ResponseEntity<List<MealResponseDto>> crawlAndSaveMeals() throws IOException {
         return ResponseEntity.ok(mealService.crawlAndSaveMealsAsDto());
     }
+
+    // 오늘의 학식 조회 (DB에 저장된 이번 주 데이터에서 오늘 요일만 조회)
+    @GetMapping("/today")
+    public ResponseEntity<List<MealResponseDto>> getTodayMeals() {
+        return ResponseEntity.ok(mealService.getTodayMealsAsDto());
+    }
+
+
+
 }

@@ -1,3 +1,4 @@
+/*
 package com.suda.domain.meal.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -28,11 +29,13 @@ public class TodayMealService {
     private final TodayMealInfoCrawler todayMealInfoCrawler;
     private final ObjectMapper objectMapper;
 
-    /**
+    */
+/**
      * 카카오 챗봇 <오늘의 학식> 응답 생성
      * - 평일(월~금): 종합강의동(학생/교직원) + 아마랜스홀(없으면 "오늘 등록된 메뉴가 없습니다.")
      * - 주말(토/일): 크롤링 없이 고정 문구 반환
-     */
+     *//*
+
     public JsonNode buildTodayMealKakaoResponse() {
         LocalDate today = LocalDate.now(KST);
         DayOfWeek dow = today.getDayOfWeek();
@@ -147,3 +150,4 @@ public class TodayMealService {
         return root;
     }
 }
+*/
