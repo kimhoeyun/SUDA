@@ -1,5 +1,6 @@
 package com.suda.domain.meal.controller;
 
+import com.suda.domain.meal.dto.MealResponseDto;
 import com.suda.domain.meal.entity.Meal;
 import com.suda.domain.meal.service.MealService;
 import lombok.RequiredArgsConstructor;
@@ -18,8 +19,7 @@ public class MealController {
 
     private final MealService mealService;
     @GetMapping("/crawl")
-    public ResponseEntity<List<Meal>> crawlAndSaveMeals() throws IOException {
-        List<Meal> savedMeals = mealService.crawlAndSaveMeals();
-        return ResponseEntity.ok(savedMeals);
+    public ResponseEntity<List<MealResponseDto>> crawlAndSaveMeals() throws IOException {
+        return ResponseEntity.ok(mealService.crawlAndSaveMealsAsDto());
     }
 }
