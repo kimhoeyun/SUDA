@@ -94,7 +94,4 @@ public class KakaoMealController {
 
         return sb.toString().trim();
     }
-
-
-
 }

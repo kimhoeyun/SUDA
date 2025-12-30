@@ -27,6 +27,8 @@ public class MealService {
     private final MealRepository mealRepository;
     private final CafeteriaRepository cafeteriaRepository;
     private final MealCrawler mealCrawler;
+    private static final String NO_MENU_MESSAGE = "오늘 등록된 메뉴가 없습니다";
+
 
     // 크롤링 후 저장
     @Transactional
@@ -34,6 +36,7 @@ public class MealService {
 
         // 기존 데이터 전체 삭제
         mealRepository.deleteAll();
+
         List<MealDto> mealDtos = mealCrawler.fetchAllMeals();
 
         List<Meal> meals = mealDtos.stream()
@@ -53,6 +56,7 @@ public class MealService {
     // 크롤링 결과 응답 DTO로 변환
     @Transactional
     public List<MealResponseDto> crawlAndSaveMealsAsDto() throws IOException {
+
         List<Meal> savedMeals = crawlAndSaveMeals();
 
         return savedMeals.stream()
@@ -129,27 +133,17 @@ public class MealService {
         // 오늘 요일의 모든 Meal 조회
         List<Meal> todayMeals = mealRepository.findAllByDayOfWeek(today);
 
-        // 같은 cafeteria를 기준으로 학식 메뉴 묶어서 저장하기
         Map<String, String> menuByCafeteriaName = todayMeals.stream()
-                .collect(Collectors.groupingBy(
+                .filter(meal -> meal.getMenu() != null && !meal.getMenu().isBlank())
+                .collect(Collectors.toMap(
                         m -> m.getCafeteria().getName(),
-                        LinkedHashMap::new,
-                        Collectors.mapping(
-                                Meal::getMenu,
-                                Collectors.collectingAndThen(Collectors.toList(), menus -> {
-                                    // 여러 건이면 줄바꿈으로 합치기
-                                    return menus.stream()
-                                            .filter(s -> s != null && !s.isBlank())
-                                            .distinct()
-                                            .collect(Collectors.joining("\n\n"));
-                                })
-                        )
+                        Meal::getMenu,
+                        (existing, replacement) -> existing,
+                        LinkedHashMap::new
                 ));
 
         // 학식 정보 출력하기
         String koreanDay = toKoreanDay(today);
-        String noMenu = "오늘 등록된 메뉴가 없습니다";
-
 
         List<MealResponseDto> responses = new ArrayList<>();
         for (MealTarget target : MealTarget.values()) {
@@ -158,7 +152,7 @@ public class MealService {
             String menu = menuByCafeteriaName.getOrDefault(key, "").trim();
 
             // 학식 정보가 비어있는 경우
-            if (menu.isBlank()) menu = noMenu;
+            if (menu.isBlank()) menu = NO_MENU_MESSAGE;
 
             // 학식 정보 응답 dto 생성
             responses.add(MealResponseDto.builder()
@@ -167,8 +161,8 @@ public class MealService {
                     .menu(menu)
                     .build());
         }
-
         return responses;
     }
+
 
 }
