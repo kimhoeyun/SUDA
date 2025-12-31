@@ -15,34 +15,64 @@ import java.util.stream.IntStream;
 @Component
 public class MealCrawler {
 
-    // 종합강의동 홈페이지 주소
-    private static final String URL = "https://www.suwon.ac.kr/index.html?menuno=762";
+    private static final String URL1 = "https://www.suwon.ac.kr/index.html?menuno=1792";
+    private static final String URL2 = "https://www.suwon.ac.kr/index.html?menuno=1793";
     private static final String[] WEEKDAYS = {"월", "화", "수", "목", "금"};
 
     private static final String REGEX_BR = "(?i)<br[^>]*>";
     private static final String HTML_SPACE = "&nbsp;";
 
+private static final List<String> MEAL_URLS = List.of(URL1, URL2);
+
     public List<MealDto> fetchAllMeals() {
         List<MealDto> combinedResult = new ArrayList<>();
-        Document doc = null;
 
-        try {
-            doc = Jsoup.connect(URL).get();
-        } catch (IOException e) {
-            System.err.println("크롤링 중단: 학교 홈페이지 접속에 실패했습니다. URL: " + URL);
-            e.printStackTrace();
-            return combinedResult;
-        }
+        for (String url : MEAL_URLS) {
+            Document doc;
+            MealPage currentPage;
 
-        for (MealTarget target : MealTarget.values()) {
             try {
-                combinedResult.addAll(fetchMealsForTarget(doc, target));
+                doc = fetchDocument(url);
+                currentPage = MealPage.fromUrl(url);
             } catch (Exception e) {
-                System.err.println("크롤링 실패: " + target.getCafeteriaName() + " - " + e.getMessage());
+                System.err.println(e.getMessage());
+                continue;
+            }
+
+            for (MealTarget target : MealTarget.values()) {
+
+                if (target.getPage() != currentPage) continue;
+
+                try {
+                    combinedResult.addAll(fetchMealsForTarget(doc, target));
+                } catch (Exception e) {
+                    System.err.println("크롤링 실패: " + target.getCafeteriaName());
+                }
             }
         }
+
         return combinedResult;
     }
+
+
+
+
+    private Document fetchDocument(String url) {
+        try {
+            return Jsoup.connect(url)
+                    .userAgent(
+                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+                                    "AppleWebKit/537.36 (KHTML, like Gecko) " +
+                                    "Chrome/120.0.0.0 Safari/537.36"
+                    )
+                    .referrer("https://www.suwon.ac.kr/")
+                    .timeout(10_000)
+                    .get();
+        } catch (IOException e) {
+            throw new IllegalStateException("학교 홈페이지 접속 실패: " + url, e);
+        }
+    }
+
 
     private List<MealDto> fetchMealsForTarget(Document doc, MealTarget target) {
         Element table = doc.selectFirst(target.getCssSelector());
@@ -51,30 +81,36 @@ public class MealCrawler {
         }
 
         Elements trs = table.select("tbody > tr");
-
         List<MealDto> result = new ArrayList<>();
 
-        for (int dayIndex = 1; dayIndex <= 5; dayIndex++) {
-            String day = WEEKDAYS[dayIndex - 1];
+        for (int dayOffset = 0; dayOffset < 5; dayOffset++) {
+            String day = WEEKDAYS[dayOffset];
+            int columnIndex = target.getMenuStartIndex() + dayOffset;
+
             StringBuilder menuBuilder = new StringBuilder();
 
             for (Element tr : trs) {
                 Elements tds = tr.select("td");
-                if (tds.size() <= dayIndex) continue;
+                if (tds.size() <= columnIndex) continue;
 
-                String menu = cleanMenuHtml(tds.get(dayIndex).html());
+                String menu = cleanMenuHtml(tds.get(columnIndex).html());
                 if (!menu.isBlank()) {
                     menuBuilder.append(menu).append("\n");
                 }
             }
 
-            if (!menuBuilder.isEmpty()) {
-                result.add(MealDto.builder()
-                        .cafeteriaName(target.getCafeteriaName())
-                        .dayOfWeek(day)
-                        .menu(menuBuilder.toString().trim())
-                        .build());
+            String menu = menuBuilder.toString().trim();
+
+            if (menu.isBlank()) {
+                continue;
             }
+
+            result.add(MealDto.builder()
+                    .cafeteriaId(target.getCafeteriaId())
+                    .cafeteriaName(target.getCafeteriaName())
+                    .dayOfWeek(day)
+                    .menu(menuBuilder.toString().trim())
+                    .build());
         }
 
         return result;
