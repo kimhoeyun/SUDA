@@ -9,4 +9,3 @@ public interface CafeteriaRepository extends JpaRepository<Cafeteria, Long> {
 
     Optional<Cafeteria> findByName(String name);
 }
-

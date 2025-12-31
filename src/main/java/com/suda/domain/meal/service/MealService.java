@@ -99,15 +99,25 @@ public class MealService {
     @Transactional(readOnly = true)
     public List<MealDto> getMealsByDay(String koreanDay) {
         DayOfWeek dayOfWeek = parseDayOfWeek(koreanDay);
+        List<Cafeteria> cafeterias = cafeteriaRepository.findAll();
 
-        return mealRepository.findAllByDayOfWeek(dayOfWeek)
-                .stream()
-                .map(meal -> MealDto.builder()
-                        .dayOfWeek(toKoreanDay(meal.getDayOfWeek())) // MONDAY, FRIDAY 등
-                        .cafeteriaName(meal.getCafeteria().getName())
-                        .menu(meal.getMenu())
-                        .build()
-                )
+        return cafeterias.stream()
+                .map(cafeteria -> {
+                    return mealRepository
+                            .findByCafeteria_NameAndDayOfWeek(cafeteria.getName(), dayOfWeek)
+                            .map(meal -> MealDto.builder()
+                                    .dayOfWeek(toKoreanDay(dayOfWeek))
+                                    .cafeteriaName(cafeteria.getName())
+                                    .menu(meal.getMenu())
+                                    .build()
+                            )
+                            .orElseGet(() -> MealDto.builder()
+                                    .dayOfWeek(toKoreanDay(dayOfWeek))
+                                    .cafeteriaName(cafeteria.getName())
+                                    .menu("오늘 등록된 메뉴가 없습니다")
+                                    .build()
+                            );
+                })
                 .toList();
     }
 
