@@ -34,8 +34,11 @@ public class MealService {
 
         List<Meal> meals = mealDtos.stream()
                 .map(dto -> {
-                    Cafeteria cafeteria = cafeteriaRepository.findByName(dto.getCafeteriaName())
-                            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 식당: " + dto.getCafeteriaName()));
+                    Cafeteria cafeteria =
+                            cafeteriaRepository.findById(dto.getCafeteriaId())
+                                    .orElseThrow(() ->
+                                            new IllegalArgumentException("존재하지 않는 식당 ID: " + dto.getCafeteriaId())
+                                    );
 
                     DayOfWeek dayOfWeek = parseDayOfWeek(dto.getDayOfWeek());
                     return new Meal(cafeteria, dayOfWeek, dto.getMenu());
