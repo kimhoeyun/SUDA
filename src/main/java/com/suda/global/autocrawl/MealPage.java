@@ -11,8 +11,8 @@ public enum MealPage {
     }
 
     public static MealPage fromUrl(String url) {
-        if (url.equals("menuno=1792")) return LECTURE_HALL;
-        if (url.equals("menuno=1793")) return AMARANTH_HALL;
+        if (url.contains("menuno=1792")) return LECTURE_HALL;
+        if (url.contains("menuno=1793")) return AMARANTH_HALL;
         throw new IllegalArgumentException("알 수 없는 식단 페이지 URL: " + url);
     }
 }
