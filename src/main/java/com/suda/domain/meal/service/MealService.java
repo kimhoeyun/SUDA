@@ -36,6 +36,7 @@ public class MealService {
 
         // 기존 데이터 전체 삭제
         mealRepository.deleteAll();
+        mealRepository.flush();
 
         List<MealDto> mealDtos = mealCrawler.fetchAllMeals();
 
