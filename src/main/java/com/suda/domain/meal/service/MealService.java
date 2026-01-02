@@ -36,13 +36,17 @@ public class MealService {
 
         // 기존 데이터 전체 삭제
         mealRepository.deleteAll();
+        mealRepository.flush();
 
         List<MealDto> mealDtos = mealCrawler.fetchAllMeals();
 
         List<Meal> meals = mealDtos.stream()
                 .map(dto -> {
-                    Cafeteria cafeteria = cafeteriaRepository.findByName(dto.getCafeteriaName())
-                            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 식당: " + dto.getCafeteriaName()));
+                    Cafeteria cafeteria =
+                            cafeteriaRepository.findById(dto.getCafeteriaId())
+                                    .orElseThrow(() ->
+                                            new IllegalArgumentException("존재하지 않는 식당 ID: " + dto.getCafeteriaId())
+                                    );
 
                     DayOfWeek dayOfWeek = parseDayOfWeek(dto.getDayOfWeek());
                     return new Meal(cafeteria, dayOfWeek, dto.getMenu());
@@ -96,15 +100,25 @@ public class MealService {
     @Transactional(readOnly = true)
     public List<MealDto> getMealsByDay(String koreanDay) {
         DayOfWeek dayOfWeek = parseDayOfWeek(koreanDay);
+        List<Cafeteria> cafeterias = cafeteriaRepository.findAll();
 
-        return mealRepository.findAllByDayOfWeek(dayOfWeek)
-                .stream()
-                .map(meal -> MealDto.builder()
-                        .dayOfWeek(toKoreanDay(meal.getDayOfWeek())) // MONDAY, FRIDAY 등
-                        .cafeteriaName(meal.getCafeteria().getName())
-                        .menu(meal.getMenu())
-                        .build()
-                )
+        return cafeterias.stream()
+                .map(cafeteria -> {
+                    return mealRepository
+                            .findByCafeteria_NameAndDayOfWeek(cafeteria.getName(), dayOfWeek)
+                            .map(meal -> MealDto.builder()
+                                    .dayOfWeek(toKoreanDay(dayOfWeek))
+                                    .cafeteriaName(cafeteria.getName())
+                                    .menu(meal.getMenu())
+                                    .build()
+                            )
+                            .orElseGet(() -> MealDto.builder()
+                                    .dayOfWeek(toKoreanDay(dayOfWeek))
+                                    .cafeteriaName(cafeteria.getName())
+                                    .menu("오늘 등록된 메뉴가 없습니다")
+                                    .build()
+                            );
+                })
                 .toList();
     }
 
