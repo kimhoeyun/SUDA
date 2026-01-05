@@ -22,7 +22,7 @@ public class MealCrawler {
     private static final String REGEX_BR = "(?i)<br[^>]*>";
     private static final String HTML_SPACE = "&nbsp;";
 
-private static final List<String> MEAL_URLS = List.of(URL1, URL2);
+    private static final List<String> MEAL_URLS = List.of(URL1, URL2);
 
     public List<MealDto> fetchAllMeals() {
         List<MealDto> combinedResult = new ArrayList<>();

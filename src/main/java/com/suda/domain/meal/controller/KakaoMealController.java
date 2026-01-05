@@ -20,22 +20,20 @@ public class KakaoMealController {
 
     // 요일별 학식 제공 API
     @PostMapping
-    public KakaoSkillResponse getMealsByDay(
-            @RequestBody KakaoSkillRequest request
-    ) {
-        String day = request.getAction().getParams().getDay();
+    public KakaoSkillResponse getMealsByDay(@RequestBody KakaoSkillRequest request) {
+        String utterance = request.getUserRequest().getUtterance();
 
-        List<MealDto> meals = mealService.getMealsByDay(day);
+        try {
+            List<MealDto> meals = mealService.getMealsByDay(utterance);
 
-        if (meals.isEmpty()) {
+            String responseText = buildResponseText(meals);
+            return KakaoSkillResponse.simpleText(responseText);
+
+        } catch (IllegalArgumentException e) {
             return KakaoSkillResponse.simpleText(
-                    day + "에는 제공되는 학식이 없습니다."
+                    "요일을 포함해서 말씀해 주세요 😊\n예) 월요일 학식 알려줘"
             );
         }
-
-        String responseText = buildResponseText(meals);
-
-        return KakaoSkillResponse.simpleText(responseText);
     }
 
     // 오늘의 학식 제공 API
@@ -52,7 +50,13 @@ public class KakaoMealController {
     }
 
 
+    // 요일별 학식 응답 텍스트 포맷
     private String buildResponseText(List<MealDto> meals) {
+
+        if (meals == null || meals.isEmpty()) {
+            return "오늘 등록된 메뉴가 없습니다.";
+        }
+
         String day = meals.get(0).getDayOfWeek();
 
         StringBuilder sb = new StringBuilder();
