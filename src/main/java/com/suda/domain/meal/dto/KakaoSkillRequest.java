@@ -5,6 +5,7 @@ import lombok.Getter;
 @Getter
 public class KakaoSkillRequest {
     private Action action;
+    private UserRequest userRequest;
 
     @Getter
     public static class Action {
@@ -14,5 +15,10 @@ public class KakaoSkillRequest {
     @Getter
     public static class Params {
         private String day;
+    }
+
+    @Getter
+    public static class UserRequest {
+        private String utterance;
     }
 }
