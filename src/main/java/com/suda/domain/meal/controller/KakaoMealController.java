@@ -6,7 +6,6 @@ import com.suda.domain.meal.dto.KakaoSkillRequest;
 import com.suda.domain.meal.dto.MealResponseDto;
 import com.suda.domain.meal.service.MealService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

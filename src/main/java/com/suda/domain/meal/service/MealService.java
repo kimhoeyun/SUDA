@@ -138,7 +138,6 @@ public class MealService {
 
         DayOfWeek today = LocalDate.now(ZoneId.of("Asia/Seoul")).getDayOfWeek();
 
-
         // 주말인 경우 학식 정보를 제공 하지 않는다고 출력하기
         if (today == DayOfWeek.SATURDAY || today == DayOfWeek.SUNDAY) {
             return List.of(); // 빈 리스트 반환
