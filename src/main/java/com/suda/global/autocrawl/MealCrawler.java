@@ -93,7 +93,7 @@ public class MealCrawler {
                 Elements tds = tr.select("td");
                 if (tds.size() <= columnIndex) continue;
 
-                String menu = cleanMenuHtml(tds.get(columnIndex).html());
+                String menu = cleanMenuText(tds.get(columnIndex));
                 if (!menu.isBlank()) {
                     menuBuilder.append(menu).append("\n");
                 }
@@ -116,17 +116,21 @@ public class MealCrawler {
         return result;
     }
 
-    private String cleanMenuHtml(String html) {
-        String cleaned = html
-                .replaceAll(REGEX_BR, "\n")
-                .replaceAll("&nbsp;", "")
-                .replaceAll("\\s+", " ")
+    private String cleanMenuText(Element td) {
+        String html = td.html()
+                .replaceAll(REGEX_BR, "\n");
+
+        String text = Jsoup.parse(html).text()
+                .replaceAll("\\s+", " ")     // 연속된 공백을 하나로
+                .replaceAll(" \n", "\n")     // 줄바꿈 전 공백 제거
+                .replaceAll("\n ", "\n")     // 줄바꿈 후 공백 제거
                 .trim();
 
         // 의미 없는 값 제거
-        if (cleaned.isEmpty()) return "";
-        if (cleaned.equals("-")) return "";
+        if (text.isEmpty() || text.equals("-")) {
+            return "";
+        }
 
-        return cleaned;
+        return text;
     }
 }
