@@ -6,11 +6,11 @@
 ---
 
 ## 목차
-
 1. [프로젝트 소개](#프로젝트-소개)
 2. [주요 기능](#주요-기능)
 3. [기술 스택](#기술-스택)
-4. [커밋 컨벤션](#커밋-컨벤션)
+4. [트러블 슈팅](#트러블-슈팅)
+5. [커밋 컨벤션](#커밋-컨벤션)
 
 ---
 
@@ -26,12 +26,25 @@
 
 ## 주요 기능
 
-- 오늘의 학식 제공
-- 요일별 학식 제공
-- 매일 오전 열 시 오늘의 학식 메뉴 발송 (예정)
+- **오늘의 학식 제공**
+  <br>오늘 날짜를 기준으로 학식 메뉴를 자동 조회하여 사용자에게 제공합니다.
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/1e86fe5b-3cc9-4c7f-b0d1-6028725a75d7" width="380" />
+  <img src="https://github.com/user-attachments/assets/25c84318-0342-4604-93ec-92ccae9cbd9d" width="380" />
+</p>
+
+
+- **요일별 학식 제공**
+  <br> 사용자가 입력한 요일에 맞는 학식 메뉴를 제공합니다.
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/0f16916c-ae57-4a6b-a97e-c42588a0fe45" width="500" />
+</p>
+
+---
+## 트러블 슈팅 
 
 ---
 
 ## 커밋 컨벤션
-
 <img width="766" height="585" alt="Image" src="https://github.com/user-attachments/assets/c460d513-313d-4b92-a00c-177b308ba1c2" />
