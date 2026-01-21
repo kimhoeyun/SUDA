@@ -60,4 +60,4 @@
 ---
 
 ## 5. 커밋 컨벤션
-<img width="766" height="585" alt="Image" src="https://github.com/user-attachments/assets/c460d513-313d-4b92-a00c-177b308ba1c2" />
+<img width="500" height="400" alt="Image" src="https://github.com/user-attachments/assets/324a3ca1-810b-41b8-88c7-1461ecd81a26" />
