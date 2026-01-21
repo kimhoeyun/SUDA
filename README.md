@@ -1,7 +1,7 @@
 
 # 수다 (수원대가 다 먹는 날까지)
 
-<img width="2048" height="2048" alt="Image" src="https://github.com/user-attachments/assets/35f8686d-0eb9-4644-a080-03dfd3b58016" />
+<img width="500" height="500" alt="Image" src="https://github.com/user-attachments/assets/35f8686d-0eb9-4644-a080-03dfd3b58016" />
 
 ---
 
