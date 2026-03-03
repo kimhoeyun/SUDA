@@ -4,23 +4,26 @@ import com.suda.domain.meal.dto.MealDto;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.stream.IntStream;
+import java.util.stream.Collectors;
 
 @Component
 public class MealCrawler {
 
-    private static final String URL1 = "https://www.suwon.ac.kr/index.html?menuno=1792";
+    private static final String URL1 = "https://www.suwon.ac.kr/index.html?menuno=762";
     private static final String URL2 = "https://www.suwon.ac.kr/index.html?menuno=1793";
     private static final String[] WEEKDAYS = {"월", "화", "수", "목", "금"};
 
     private static final String REGEX_BR = "(?i)<br[^>]*>";
     private static final String HTML_SPACE = "&nbsp;";
+    private static final String BR_TOKEN = "__SUDA_BR__";
 
     private static final List<String> MEAL_URLS = List.of(URL1, URL2);
 
@@ -118,19 +121,18 @@ public class MealCrawler {
 
     private String cleanMenuText(Element td) {
         String html = td.html()
-                .replaceAll(REGEX_BR, "\n");
+                .replaceAll(REGEX_BR, BR_TOKEN)
+                .replace(HTML_SPACE, " ");
 
-        String text = Jsoup.parse(html).text()
-                .replaceAll("\\s+", " ")     // 연속된 공백을 하나로
-                .replaceAll(" \n", "\n")     // 줄바꿈 전 공백 제거
-                .replaceAll("\n ", "\n")     // 줄바꿈 후 공백 제거
-                .trim();
+        // HTML 엔티티(&amp; 등)를 문자로 변환한 뒤, BR 토큰을 줄바꿈으로 복원한다.
+        String decoded = Parser.unescapeEntities(html, false);
+        String normalizedText = Jsoup.parse(decoded).text().replace(BR_TOKEN, "\n");
 
-        // 의미 없는 값 제거
-        if (text.isEmpty() || text.equals("-")) {
-            return "";
-        }
+        String result = Arrays.stream(normalizedText.split("\\R"))
+                .map(String::trim)
+                .filter(line -> !line.isBlank() && !line.equals("-"))
+                .collect(Collectors.joining("\n"));
 
-        return text;
+        return result.trim();
     }
 }
