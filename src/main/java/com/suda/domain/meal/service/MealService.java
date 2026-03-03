@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -34,7 +33,7 @@ public class MealService {
 
     // 크롤링 후 저장
     @Transactional
-    public List<Meal> crawlAndSaveMeals() throws IOException {
+    public List<Meal> crawlAndSaveMeals() {
 
         mealRepository.deleteAll();
         mealRepository.flush();
@@ -61,7 +60,7 @@ public class MealService {
 
     // 크롤링 결과 응답 DTO로 변환
     @Transactional
-    public List<MealResponseDto> crawlAndSaveMealsAsDto() throws IOException {
+    public List<MealResponseDto> crawlAndSaveMealsAsDto() {
 
         List<Meal> savedMeals = crawlAndSaveMeals();
 

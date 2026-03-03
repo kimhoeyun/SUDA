@@ -39,6 +39,13 @@
   <img src="https://github.com/user-attachments/assets/0f16916c-ae57-4a6b-a97e-c42588a0fe45" width="500" />
 </p>
 
+- **주간 자동 크롤링**
+  <br> 매주 월요일 오전 10시(Asia/Seoul)에 자동으로 학식 정보를 크롤링하여 저장합니다.
+  <br> 설정 키: `app.meal-crawl.enabled`, `app.meal-crawl.cron`, `app.meal-crawl.zone`
+
+- **수동 크롤링 API (운영 내부용)**
+  <br> 긴급 갱신이 필요할 때 `GET /api/meals/crawl`로 즉시 크롤링/저장을 실행할 수 있습니다.
+
 ---
 ## 3. 기술 스택 
 

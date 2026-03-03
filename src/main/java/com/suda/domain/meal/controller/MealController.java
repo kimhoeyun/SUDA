@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -19,9 +18,9 @@ public class MealController {
 
     private final MealService mealService;
 
-    // 홈페이지 크롤링 후 학식 정보를 요일별로 저장
+    // 운영 내부 수동 갱신용: 홈페이지 크롤링 후 학식 정보를 요일별로 저장
     @GetMapping("/crawl")
-    public ResponseEntity<List<MealResponseDto>> crawlAndSaveMeals() throws IOException {
+    public ResponseEntity<List<MealResponseDto>> crawlAndSaveMeals() {
         return ResponseEntity.ok(mealService.crawlAndSaveMealsAsDto());
     }
 
