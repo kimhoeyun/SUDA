@@ -6,6 +6,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -14,6 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Component
 public class MealCrawler {
 
@@ -28,7 +30,14 @@ public class MealCrawler {
     private static final List<String> MEAL_URLS = List.of(URL1, URL2);
 
     public List<MealDto> fetchAllMeals() {
+        return fetchAllMealsWithReport().meals();
+    }
+
+    public MealCrawlReport fetchAllMealsWithReport() {
         List<MealDto> combinedResult = new ArrayList<>();
+        List<String> errors = new ArrayList<>();
+        int attemptedTargets = 0;
+        int succeededTargets = 0;
 
         for (String url : MEAL_URLS) {
             Document doc;
@@ -38,23 +47,30 @@ public class MealCrawler {
                 doc = fetchDocument(url);
                 currentPage = MealPage.fromUrl(url);
             } catch (Exception e) {
-                System.err.println(e.getMessage());
+                String message = "URL 크롤링 실패: " + url + ", reason=" + e.getMessage();
+                log.warn(message, e);
+                errors.add(message);
                 continue;
             }
 
             for (MealTarget target : MealTarget.values()) {
 
                 if (target.getPage() != currentPage) continue;
+                attemptedTargets++;
 
                 try {
-                    combinedResult.addAll(fetchMealsForTarget(doc, target));
+                    List<MealDto> meals = fetchMealsForTarget(doc, target);
+                    combinedResult.addAll(meals);
+                    succeededTargets++;
                 } catch (Exception e) {
-                    System.err.println("크롤링 실패: " + target.getCafeteriaName());
+                    String message = "타겟 크롤링 실패: " + target.getCafeteriaName() + ", reason=" + e.getMessage();
+                    log.warn(message, e);
+                    errors.add(message);
                 }
             }
         }
 
-        return combinedResult;
+        return new MealCrawlReport(combinedResult, errors, attemptedTargets, succeededTargets);
     }
 
 
