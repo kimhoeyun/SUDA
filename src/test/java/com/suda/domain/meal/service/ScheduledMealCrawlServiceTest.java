@@ -127,6 +127,31 @@ class ScheduledMealCrawlServiceTest {
         assertThrows(IllegalArgumentException.class, () -> scheduledMealCrawlService.crawlAndSaveMealsSafely());
     }
 
+    @Test
+    void crawlAndSaveMealsSafely_whenValidationFailsMidInput_noPartialUpsert() {
+        MealCrawlReport report = new MealCrawlReport(
+                List.of(
+                        sampleDto(1L, "월", "새 메뉴"),
+                        sampleDto(999L, "화", "실패 메뉴")
+                ),
+                List.of(),
+                2,
+                2
+        );
+        when(mealCrawler.fetchAllMealsWithReport()).thenReturn(report);
+
+        Cafeteria cafeteria1 = new Cafeteria();
+        ReflectionTestUtils.setField(cafeteria1, "id", 1L);
+        when(cafeteriaRepository.findById(1L)).thenReturn(Optional.of(cafeteria1));
+        when(cafeteriaRepository.findById(999L)).thenReturn(Optional.empty());
+        when(dayExtractor.parse("월")).thenReturn(DayOfWeek.MONDAY);
+
+        assertThrows(IllegalArgumentException.class, () -> scheduledMealCrawlService.crawlAndSaveMealsSafely());
+
+        verify(mealRepository, never()).findByCafeteria_IdAndDayOfWeek(any(Long.class), any(DayOfWeek.class));
+        verify(mealRepository, never()).save(any(Meal.class));
+    }
+
     private MealDto sampleDto(Long cafeteriaId, String dayOfWeek, String menu) {
         return MealDto.builder()
                 .cafeteriaId(cafeteriaId)

@@ -36,25 +36,34 @@ public class ScheduledMealCrawlService {
             return ScheduledMealCrawlResult.failure(report, ScheduledMealCrawlResult.REASON_EMPTY_RESULT);
         }
 
-        int savedMeals = upsertMeals(report.meals());
+        List<ResolvedMeal> resolvedMeals = resolveMeals(report.meals());
+        int savedMeals = upsertMeals(resolvedMeals);
         return ScheduledMealCrawlResult.success(report, savedMeals);
     }
 
-    private int upsertMeals(List<MealDto> mealDtos) {
+    private List<ResolvedMeal> resolveMeals(List<MealDto> mealDtos) {
+        return mealDtos.stream()
+                .map(dto -> {
+                    Cafeteria cafeteria = cafeteriaRepository.findById(dto.getCafeteriaId())
+                            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 식당 ID: " + dto.getCafeteriaId()));
+                    DayOfWeek dayOfWeek = dayExtractor.parse(dto.getDayOfWeek());
+                    return new ResolvedMeal(cafeteria, dayOfWeek, dto.getMenu());
+                })
+                .toList();
+    }
+
+    private int upsertMeals(List<ResolvedMeal> resolvedMeals) {
         int affectedRows = 0;
 
-        for (MealDto dto : mealDtos) {
-            Cafeteria cafeteria = cafeteriaRepository.findById(dto.getCafeteriaId())
-                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 식당 ID: " + dto.getCafeteriaId()));
-
-            DayOfWeek dayOfWeek = dayExtractor.parse(dto.getDayOfWeek());
-
-            mealRepository.findByCafeteria_IdAndDayOfWeek(cafeteria.getId(), dayOfWeek)
-                    .ifPresentOrElse(existingMeal -> existingMeal.updateMenu(dto.getMenu()),
-                            () -> mealRepository.save(new Meal(cafeteria, dayOfWeek, dto.getMenu())));
+        for (ResolvedMeal resolvedMeal : resolvedMeals) {
+            mealRepository.findByCafeteria_IdAndDayOfWeek(resolvedMeal.cafeteria().getId(), resolvedMeal.dayOfWeek())
+                    .ifPresentOrElse(existingMeal -> existingMeal.updateMenu(resolvedMeal.menu()),
+                            () -> mealRepository.save(new Meal(resolvedMeal.cafeteria(), resolvedMeal.dayOfWeek(), resolvedMeal.menu())));
 
             affectedRows++;
         }
         return affectedRows;
     }
+
+    private record ResolvedMeal(Cafeteria cafeteria, DayOfWeek dayOfWeek, String menu) {}
 }
