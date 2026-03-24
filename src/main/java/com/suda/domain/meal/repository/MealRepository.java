@@ -12,4 +12,6 @@ public interface MealRepository extends JpaRepository<Meal, Long> {
 
     // 종강(=종합강의동) / 아마랜스 오늘 메뉴를 각각 가져오기
     Optional<Meal> findByCafeteria_NameAndDayOfWeek(String cafeteriaName, DayOfWeek dayOfWeek);
+
+    Optional<Meal> findByCafeteria_IdAndDayOfWeek(Long cafeteriaId, DayOfWeek dayOfWeek);
 }

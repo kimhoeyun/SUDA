@@ -1,7 +1,7 @@
 package com.suda.domain.meal.scheduler;
 
-import com.suda.domain.meal.dto.MealResponseDto;
-import com.suda.domain.meal.service.MealService;
+import com.suda.domain.meal.service.ScheduledMealCrawlResult;
+import com.suda.domain.meal.service.ScheduledMealCrawlService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,36 +21,43 @@ import static org.mockito.Mockito.when;
 class MealCrawlSchedulerTest {
 
     @Mock
-    private MealService mealService;
+    private ScheduledMealCrawlService scheduledMealCrawlService;
 
     @InjectMocks
     private MealCrawlScheduler mealCrawlScheduler;
 
     @BeforeEach
     void setUp() {
+        ReflectionTestUtils.setField(mealCrawlScheduler, "enabled", true);
         ReflectionTestUtils.setField(mealCrawlScheduler, "zone", "Asia/Seoul");
         ReflectionTestUtils.setField(mealCrawlScheduler, "cronExpression", "0 0 10 * * MON");
     }
 
     @Test
     void crawlWeeklyMeals_success_callsServiceOnce() {
-        when(mealService.crawlAndSaveMealsAsDto()).thenReturn(List.of(
-                MealResponseDto.builder()
-                        .cafeteriaName("학생식단(종합강의동)")
-                        .dayOfWeek("월요일")
-                        .menu("돈까스")
-                        .build()
-        ));
+        when(scheduledMealCrawlService.crawlAndSaveMealsSafely()).thenReturn(
+                new ScheduledMealCrawlResult(true, "NONE", 6, 3, 3, 6, List.of())
+        );
 
         assertDoesNotThrow(() -> mealCrawlScheduler.crawlWeeklyMeals());
-        verify(mealService, times(1)).crawlAndSaveMealsAsDto();
+        verify(scheduledMealCrawlService, times(1)).crawlAndSaveMealsSafely();
     }
 
     @Test
     void crawlWeeklyMeals_failure_doesNotThrow() {
-        when(mealService.crawlAndSaveMealsAsDto()).thenThrow(new IllegalStateException("crawl failed"));
+        when(scheduledMealCrawlService.crawlAndSaveMealsSafely()).thenThrow(new IllegalStateException("crawl failed"));
 
         assertDoesNotThrow(() -> mealCrawlScheduler.crawlWeeklyMeals());
-        verify(mealService, times(1)).crawlAndSaveMealsAsDto();
+        verify(scheduledMealCrawlService, times(1)).crawlAndSaveMealsSafely();
+    }
+
+    @Test
+    void crawlWeeklyMeals_validationFailure_doesNotThrow() {
+        when(scheduledMealCrawlService.crawlAndSaveMealsSafely()).thenReturn(
+                new ScheduledMealCrawlResult(false, "CRAWL_ERRORS", 4, 3, 2, 0, List.of("selector missing"))
+        );
+
+        assertDoesNotThrow(() -> mealCrawlScheduler.crawlWeeklyMeals());
+        verify(scheduledMealCrawlService, times(1)).crawlAndSaveMealsSafely();
     }
 }
