@@ -13,6 +13,7 @@ build/
 # === Spring Boot 설정 파일 (보안상 제외 권장) ===
 /src/main/resources/application.yml
 /src/main/resources/application.properties
+/src/test/resources/application-perf-test.yml
 *.yml
 *.yaml
 
