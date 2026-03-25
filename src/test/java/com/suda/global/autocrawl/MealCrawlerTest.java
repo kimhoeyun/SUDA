@@ -1,4 +1,4 @@
-﻿package com.suda.global.autocrawl;
+package com.suda.global.autocrawl;
 
 import org.junit.jupiter.api.Test;
 
