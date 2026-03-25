@@ -26,6 +26,7 @@ public class MealCrawler {
     private static final String REGEX_BR = "(?i)<br[^>]*>";
     private static final String HTML_SPACE = "&nbsp;";
     private static final String BR_TOKEN = "__SUDA_BR__";
+    private static final String COMMON_SIDE_DISH_PATTERN = "(?<=\\S)\\s+\\(공통찬\\)";
     private static final List<String> MEAL_URLS = List.of(URL1, URL2);
 
     public List<MealDto> fetchAllMeals() {
@@ -165,6 +166,6 @@ public class MealCrawler {
     }
 
     static String normalizeSpecialMenuText(String text) {
-        return text;
+        return text.replaceAll(COMMON_SIDE_DISH_PATTERN, "\n(공통찬)");
     }
 }
