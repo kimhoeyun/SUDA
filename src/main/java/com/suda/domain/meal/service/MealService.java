@@ -81,25 +81,32 @@ public class MealService {
         DayOfWeek dayOfWeek = dayExtractor.extract(utterance);
         String koreanDay = dayExtractor.toKorean(dayOfWeek);
 
-        List<Cafeteria> cafeterias = cafeteriaRepository.findAll();
+        List<Meal> mealsByDay = mealRepository.findAllByDayOfWeek(dayOfWeek);
 
-        return cafeterias.stream()
-                .map(cafeteria ->
-                        mealRepository
-                                .findByCafeteria_NameAndDayOfWeek(cafeteria.getName(), dayOfWeek)
-                                .map(meal -> MealDto.builder()
-                                        .dayOfWeek(koreanDay)
-                                        .cafeteriaName(cafeteria.getName())
-                                        .menu(meal.getMenu())
-                                        .build()
-                                )
-                                .orElseGet(() -> MealDto.builder()
-                                        .dayOfWeek(koreanDay)
-                                        .cafeteriaName(cafeteria.getName())
-                                        .menu("오늘 등록된 메뉴가 없습니다")
-                                        .build()
-                                )
-                )
+        Map<String, String> menuByCafeteriaName = mealsByDay.stream()
+                .filter(meal -> meal.getMenu() != null && !meal.getMenu().isBlank())
+                .collect(Collectors.toMap(
+                        meal -> meal.getCafeteria().getName(),
+                        Meal::getMenu,
+                        (existing, replacement) -> existing,
+                        LinkedHashMap::new
+                ));
+
+        return Arrays.stream(MealTarget.values())
+                .map(target -> {
+                    String cafeteriaName = target.getCafeteriaName();
+                    String menu = menuByCafeteriaName.getOrDefault(cafeteriaName, "").trim();
+
+                    if (menu.isBlank()) {
+                        menu = NO_MENU_MESSAGE;
+                    }
+
+                    return MealDto.builder()
+                            .dayOfWeek(koreanDay)
+                            .cafeteriaName(cafeteriaName)
+                            .menu(menu)
+                            .build();
+                })
                 .toList();
     }
 
