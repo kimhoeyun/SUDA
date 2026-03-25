@@ -24,7 +24,6 @@ public class MealCrawler {
     private static final String REGEX_BR = "(?i)<br[^>]*>";
     private static final String HTML_SPACE = "&nbsp;";
     private static final String BR_TOKEN = "__SUDA_BR__";
-
     private static final List<String> MEAL_URLS = List.of(URL1, URL2);
 
     public List<MealDto> fetchAllMeals() {
@@ -133,6 +132,10 @@ public class MealCrawler {
                 .filter(line -> !line.isBlank() && !line.equals("-"))
                 .collect(Collectors.joining("\n"));
 
-        return result.trim();
+        return normalizeSpecialMenuText(result).trim();
+    }
+
+    static String normalizeSpecialMenuText(String text) {
+        return text;
     }
 }
