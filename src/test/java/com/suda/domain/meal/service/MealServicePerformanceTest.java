@@ -19,6 +19,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,16 +31,8 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(properties = {
-        "spring.datasource.url=jdbc:h2:mem:meal-service-performance;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
-        "spring.datasource.driver-class-name=org.h2.Driver",
-        "spring.datasource.username=sa",
-        "spring.datasource.password=",
-        "spring.jpa.hibernate.ddl-auto=create-drop",
-        "spring.jpa.properties.hibernate.show_sql=false",
-        "spring.jpa.properties.hibernate.format_sql=false",
-        "app.meal-crawl.enabled=false"
-})
+@SpringBootTest
+@ActiveProfiles("perf-test")
 @Transactional
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Import(MealServicePerformanceTest.TestDataSourceConfig.class)
