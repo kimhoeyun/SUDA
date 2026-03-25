@@ -110,6 +110,32 @@ public class MealService {
                 .toList();
     }
 
+    /** TEST ONLY - N+1 성능 비교용, 운영 코드에서 사용 금지 */
+    @Transactional(readOnly = true)
+    public List<MealDto> getMealsByDay_legacy(String utterance) {
+        DayOfWeek dayOfWeek = dayExtractor.extract(utterance);
+        String koreanDay = dayExtractor.toKorean(dayOfWeek);
+        List<Cafeteria> cafeterias = cafeteriaRepository.findAll();
+        return cafeterias.stream()
+                .map(cafeteria ->
+                        mealRepository
+                                .findByCafeteria_NameAndDayOfWeek(cafeteria.getName(), dayOfWeek)
+                                .map(meal -> MealDto.builder()
+                                        .dayOfWeek(koreanDay)
+                                        .cafeteriaName(cafeteria.getName())
+                                        .menu(meal.getMenu())
+                                        .build()
+                                )
+                                .orElseGet(() -> MealDto.builder()
+                                        .dayOfWeek(koreanDay)
+                                        .cafeteriaName(cafeteria.getName())
+                                        .menu("오늘 등록된 메뉴가 없습니다")
+                                        .build()
+                                )
+                )
+                .toList();
+    }
+
 
     // 오늘의 학식: 학식 정보 응답 dto 생성
     @Transactional(readOnly = true)
