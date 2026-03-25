@@ -40,4 +40,8 @@ public class Meal {
         this.dayOfWeek = dayOfWeek;
         this.menu = menu;
     }
+
+    public void updateMenu(String menu) {
+        this.menu = menu;
+    }
 }
