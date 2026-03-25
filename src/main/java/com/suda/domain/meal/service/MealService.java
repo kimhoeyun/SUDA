@@ -3,6 +3,7 @@ package com.suda.domain.meal.service;
 import com.suda.domain.cafeteria.entity.Cafeteria;
 import com.suda.domain.cafeteria.repository.CafeteriaRepository;
 import com.suda.domain.meal.dto.MealDto;
+import com.suda.domain.meal.dto.MealInfo;
 import com.suda.domain.meal.dto.MealResponseDto;
 import com.suda.domain.meal.entity.Meal;
 import com.suda.domain.meal.repository.MealRepository;
@@ -103,10 +104,11 @@ public class MealService {
     }
 
 
-    // 오늘의 학식: DB에서 "오늘 요일"만 조회해서 응답 DTO로 변환
+    // 오늘의 학식: 학식 정보 응답 dto 생성
     @Transactional(readOnly = true)
     public List<MealResponseDto> getTodayMealsAsDto() {
 
+        // 현재 요일 조회
         DayOfWeek today = LocalDate.now(ZoneId.of("Asia/Seoul")).getDayOfWeek();
 
         // 주말인 경우 학식 정보를 제공 하지 않는다고 출력하기
@@ -114,7 +116,7 @@ public class MealService {
             return List.of(); // 빈 리스트 반환
         }
 
-        // 오늘 요일의 모든 Meal 조회
+        // 현재 요일의 모든 Meal 조회
         List<Meal> todayMeals = mealRepository.findAllByDayOfWeek(today);
 
         Map<String, String> menuByCafeteriaName = todayMeals.stream()
@@ -126,10 +128,10 @@ public class MealService {
                         LinkedHashMap::new
                 ));
 
-        // 학식 정보 출력하기
-        String koreanDay = dayExtractor.toKorean(today);
 
+        String koreanDay = dayExtractor.toKorean(today);
         List<MealResponseDto> responses = new ArrayList<>();
+
         for (MealTarget target : MealTarget.values()) {
 
             String key = target.getCafeteriaName();
@@ -138,7 +140,7 @@ public class MealService {
             // 학식 정보가 비어있는 경우
             if (menu.isBlank()) menu = NO_MENU_MESSAGE;
 
-            // 학식 정보 응답 dto 생성
+
             responses.add(MealResponseDto.builder()
                     .cafeteriaName(key)
                     .dayOfWeek(koreanDay)
@@ -147,6 +149,30 @@ public class MealService {
         }
         return responses;
     }
+
+    // 요일별 학식 응답 텍스트 포맷
+    public String buildResponseText(List<? extends MealInfo> meals, String headerSuffix) {
+
+        if (meals == null || meals.isEmpty()) {
+            return "오늘 등록된 메뉴가 없습니다.";
+        }
+
+        String day = meals.get(0).getDayOfWeek();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(day).append(headerSuffix).append("\n\n");
+
+        meals.forEach(meal -> {
+            sb.append("• ")
+                    .append(meal.getCafeteriaName())
+                    .append("\n")
+                    .append(meal.getMenu())
+                    .append("\n\n");
+        });
+
+        return sb.toString().trim();
+    }
+
 
 
 }

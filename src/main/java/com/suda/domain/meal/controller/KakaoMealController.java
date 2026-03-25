@@ -25,7 +25,7 @@ public class KakaoMealController {
         try {
             List<MealDto> meals = mealService.getMealsByDay(utterance);
 
-            String responseText = buildResponseText(meals);
+            String responseText = mealService.buildResponseText(meals, " 학식 메뉴입니다 🍱");
             return KakaoSkillResponse.simpleText(responseText);
 
         } catch (IllegalArgumentException e) {
@@ -39,62 +39,15 @@ public class KakaoMealController {
     @PostMapping("/today")
     public KakaoSkillResponse getTodayMeals() {
 
-        // DB에 저장된 데이터에서 오늘 요일만 조회
+        // 오늘 학식 정보 dto 생성
         List<MealResponseDto> todayMeals = mealService.getTodayMealsAsDto();
 
         // 카카오 형식의 응답값 생성
-        String responseText = buildTodayResponseText(todayMeals);
+        String responseText = mealService.buildResponseText(todayMeals, " 오늘의 학식입니다 🍱");
 
         return KakaoSkillResponse.simpleText(responseText);
     }
 
 
-    // 요일별 학식 응답 텍스트 포맷
-    private String buildResponseText(List<MealDto> meals) {
 
-        if (meals == null || meals.isEmpty()) {
-            return "오늘 등록된 메뉴가 없습니다.";
-        }
-
-        String day = meals.get(0).getDayOfWeek();
-
-        StringBuilder sb = new StringBuilder();
-        sb.append(day).append(" 학식 메뉴입니다 🍱\n\n");
-
-        meals.forEach(meal -> {
-            sb.append("• ")
-                    .append(meal.getCafeteriaName())
-                    .append("\n")
-                    .append(meal.getMenu())
-                    .append("\n\n");
-        });
-
-        return sb.toString();
-    }
-
-    // 오늘의 학식용 응답 텍스트 포맷
-    private String buildTodayResponseText(List<MealResponseDto> meals) {
-
-        // 주말인 경우, 학식 정보가 없는 경우
-        if (meals == null || meals.isEmpty()) {
-            return "오늘 등록된 메뉴가 없습니다.";
-        }
-
-        // 요일 구하기
-        String dayLabel = meals.get(0).getDayOfWeek();
-
-        StringBuilder sb = new StringBuilder();
-        sb.append(dayLabel).append(" 오늘의 학식입니다 🍱\n\n");
-
-        int idx = 1;
-        for (MealResponseDto meal : meals) {
-            sb.append(idx++).append(". ")
-                    .append(meal.getCafeteriaName())
-                    .append("\n")
-                    .append(meal.getMenu())
-                    .append("\n\n");
-        }
-
-        return sb.toString().trim();
-    }
 }
