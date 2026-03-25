@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class MealDto {
+public class MealDto implements MealInfo {
     private Long cafeteriaId;
     private String dayOfWeek;
     private String cafeteriaName;
