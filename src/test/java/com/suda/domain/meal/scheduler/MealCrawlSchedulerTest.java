@@ -36,7 +36,7 @@ class MealCrawlSchedulerTest {
     @Test
     void crawlWeeklyMeals_success_callsServiceOnce() {
         when(scheduledMealCrawlService.crawlAndSaveMealsSafely()).thenReturn(
-                new ScheduledMealCrawlResult(true, "NONE", 6, 3, 3, 6, List.of())
+                new ScheduledMealCrawlResult(true, "NONE", "학식 정보가 정상적으로 업데이트되었습니다.", 6, 3, 3, 6, List.of())
         );
 
         assertDoesNotThrow(() -> mealCrawlScheduler.crawlWeeklyMeals());
@@ -54,7 +54,7 @@ class MealCrawlSchedulerTest {
     @Test
     void crawlWeeklyMeals_validationFailure_doesNotThrow() {
         when(scheduledMealCrawlService.crawlAndSaveMealsSafely()).thenReturn(
-                new ScheduledMealCrawlResult(false, "CRAWL_ERRORS", 4, 3, 2, 0, List.of("selector missing"))
+                new ScheduledMealCrawlResult(false, "CRAWL_ERRORS", "학식 정보가 아직 업데이트 되지 않았습니다", 4, 3, 2, 0, List.of("selector missing"))
         );
 
         assertDoesNotThrow(() -> mealCrawlScheduler.crawlWeeklyMeals());

@@ -3,7 +3,9 @@ package com.suda.domain.meal.service;
 import com.suda.domain.cafeteria.entity.Cafeteria;
 import com.suda.domain.cafeteria.repository.CafeteriaRepository;
 import com.suda.domain.meal.dto.MealDto;
+import com.suda.domain.meal.entity.CrawlLog;
 import com.suda.domain.meal.entity.Meal;
+import com.suda.domain.meal.repository.CrawlLogRepository;
 import com.suda.domain.meal.repository.MealRepository;
 import com.suda.domain.meal.util.KoreanDayExtractor;
 import com.suda.global.autocrawl.MealCrawlReport;
@@ -24,7 +26,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -38,6 +42,9 @@ class ScheduledMealCrawlServiceTest {
     private MealRepository mealRepository;
 
     @Mock
+    private CrawlLogRepository crawlLogRepository;
+
+    @Mock
     private CafeteriaRepository cafeteriaRepository;
 
     @Mock
@@ -47,7 +54,7 @@ class ScheduledMealCrawlServiceTest {
     private ScheduledMealCrawlService scheduledMealCrawlService;
 
     @Test
-    void crawlAndSaveMealsSafely_whenCrawlerHasErrors_skipsDatabaseWrites() {
+    void crawlAndSaveMealsSafely_whenCrawlerHasErrors_returnsFailureAndSavesCrawlLog() {
         MealCrawlReport report = new MealCrawlReport(
                 List.of(sampleDto(1L, "월", "돈까스")),
                 List.of("타겟 크롤링 실패"),
@@ -60,12 +67,13 @@ class ScheduledMealCrawlServiceTest {
 
         assertFalse(result.success());
         assertEquals(ScheduledMealCrawlResult.REASON_CRAWL_ERRORS, result.reason());
+        verify(crawlLogRepository, times(1)).save(any(CrawlLog.class));
         verify(mealRepository, never()).save(any(Meal.class));
         verify(cafeteriaRepository, never()).findById(any(Long.class));
     }
 
     @Test
-    void crawlAndSaveMealsSafely_whenNoMeals_skipsDatabaseWrites() {
+    void crawlAndSaveMealsSafely_whenNoMeals_returnsFailureAndSavesCrawlLog() {
         MealCrawlReport report = new MealCrawlReport(List.of(), List.of(), 3, 3);
         when(mealCrawler.fetchAllMealsWithReport()).thenReturn(report);
 
@@ -73,12 +81,13 @@ class ScheduledMealCrawlServiceTest {
 
         assertFalse(result.success());
         assertEquals(ScheduledMealCrawlResult.REASON_EMPTY_RESULT, result.reason());
+        verify(crawlLogRepository, times(1)).save(any(CrawlLog.class));
         verify(mealRepository, never()).save(any(Meal.class));
         verify(cafeteriaRepository, never()).findById(any(Long.class));
     }
 
     @Test
-    void crawlAndSaveMealsSafely_whenValidReport_upsertsMeals() {
+    void crawlAndSaveMealsSafely_whenValidReport_returnsSuccessAndSavesCrawlLog() {
         MealCrawlReport report = new MealCrawlReport(
                 List.of(
                         sampleDto(1L, "월", "새 메뉴"),
@@ -110,6 +119,8 @@ class ScheduledMealCrawlServiceTest {
         assertTrue(result.success());
         assertEquals(2, result.savedMeals());
         assertEquals("새 메뉴", existing.getMenu());
+        verify(crawlLogRepository, times(1)).save(any(CrawlLog.class));
+        verify(mealRepository, atLeastOnce()).findByCafeteria_IdAndDayOfWeek(any(Long.class), any(DayOfWeek.class));
         verify(mealRepository).save(any(Meal.class));
     }
 
@@ -125,6 +136,7 @@ class ScheduledMealCrawlServiceTest {
         when(cafeteriaRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThrows(IllegalArgumentException.class, () -> scheduledMealCrawlService.crawlAndSaveMealsSafely());
+        verify(crawlLogRepository, never()).save(any(CrawlLog.class));
     }
 
     @Test
@@ -148,6 +160,7 @@ class ScheduledMealCrawlServiceTest {
 
         assertThrows(IllegalArgumentException.class, () -> scheduledMealCrawlService.crawlAndSaveMealsSafely());
 
+        verify(crawlLogRepository, never()).save(any(CrawlLog.class));
         verify(mealRepository, never()).findByCafeteria_IdAndDayOfWeek(any(Long.class), any(DayOfWeek.class));
         verify(mealRepository, never()).save(any(Meal.class));
     }
