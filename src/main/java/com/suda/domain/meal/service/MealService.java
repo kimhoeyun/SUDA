@@ -8,6 +8,7 @@ import com.suda.domain.meal.dto.MealResponseDto;
 import com.suda.domain.meal.entity.Meal;
 import com.suda.domain.meal.repository.MealRepository;
 import com.suda.domain.meal.util.KoreanDayExtractor;
+import com.suda.global.autocrawl.MealCrawlReport;
 import com.suda.global.autocrawl.MealCrawler;
 import com.suda.global.autocrawl.MealTarget;
 import lombok.RequiredArgsConstructor;
@@ -63,8 +64,10 @@ public class MealService {
     @Transactional
     public List<MealResponseDto> crawlAndSaveMealsAsDto() {
 
+        // 학식 정보 크롤링
         List<Meal> savedMeals = crawlAndSaveMeals();
 
+        // 크롤링 결과 dto 변환
         return savedMeals.stream()
                 .map(meal -> MealResponseDto.builder()
                         .cafeteriaName(meal.getCafeteria().getName())
@@ -144,7 +147,7 @@ public class MealService {
         // 현재 요일 조회
         DayOfWeek today = LocalDate.now(ZoneId.of("Asia/Seoul")).getDayOfWeek();
 
-        // 주말인 경우 학식 정보를 제공 하지 않는다고 출력하기
+        // 주말인 경우 빈리스트 생성
         if (today == DayOfWeek.SATURDAY || today == DayOfWeek.SUNDAY) {
             return List.of(); // 빈 리스트 반환
         }
@@ -186,10 +189,12 @@ public class MealService {
     // 요일별 학식 응답 텍스트 포맷
     public String buildResponseText(List<? extends MealInfo> meals, String headerSuffix) {
 
+        // 주말
         if (meals == null || meals.isEmpty()) {
             return "오늘 등록된 메뉴가 없습니다.";
         }
 
+        // 평일
         String day = meals.get(0).getDayOfWeek();
 
         StringBuilder sb = new StringBuilder();

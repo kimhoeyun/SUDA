@@ -39,7 +39,7 @@ public class KakaoMealController {
     @PostMapping("/today")
     public KakaoSkillResponse getTodayMeals() {
 
-        // 오늘 학식 정보 dto 생성
+        // 오늘 학식 정보 조회
         List<MealResponseDto> todayMeals = mealService.getTodayMealsAsDto();
 
         // 카카오 형식의 응답값 생성
