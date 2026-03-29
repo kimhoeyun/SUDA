@@ -32,7 +32,8 @@ public class MealService {
     private final CrawlLogRepository crawlLogRepository;
     private final MealCrawler mealCrawler;
     private final KoreanDayExtractor dayExtractor;
-    private static final String NO_MENU_MESSAGE = "오늘 등록된 메뉴가 없습니다";
+    private static final String NO_MENU_MESSAGE = "등록된 메뉴가 없습니다";
+    private static final String MENU_MESSAGE = "학식 메뉴입니다 🍱";
 
 
     // 크롤링 후 저장
@@ -130,7 +131,7 @@ public class MealService {
                                 .orElseGet(() -> MealDto.builder()
                                         .dayOfWeek(koreanDay)
                                         .cafeteriaName(cafeteria.getName())
-                                        .menu("오늘 등록된 메뉴가 없습니다")
+                                        .menu(NO_MENU_MESSAGE)
                                         .build()
                                 )
                 )
@@ -145,7 +146,7 @@ public class MealService {
         // 최신 크롤링 결과 검증
         validateLatestCrawlSuccess();
 
-        // 현재 요일 구하기
+        // 검증 완료후 학식 정보 조회
         DayOfWeek today = LocalDate.now(ZoneId.of("Asia/Seoul")).getDayOfWeek();
         String koreanDay = dayExtractor.toKorean(today);
 
@@ -178,21 +179,21 @@ public class MealService {
     }
 
     // 학식 메뉴 응답 텍스트 포맷
-    public String buildResponseText(List<? extends MealInfo> meals, String headerSuffix) {
+    public String buildResponseText(List<? extends MealInfo> meals) {
 
-        // 주말
+        // 주말 or 메뉴가 없는 경우
         if (meals == null || meals.isEmpty()) {
-            return "오늘 등록된 메뉴가 없습니다.";
+            return NO_MENU_MESSAGE;
         }
 
-        // 평일
-        String day = meals.get(0).getDayOfWeek();
+        // 평일인 경우
+        String today = meals.get(0).getDayOfWeek();
 
         StringBuilder sb = new StringBuilder();
-        sb.append(day).append(headerSuffix).append("\n\n");
+        sb.append(today).append(MENU_MESSAGE).append("\n\n");
 
         meals.forEach(meal -> {
-            sb.append("• ")
+            sb.append("✅ ")
                     .append(meal.getCafeteriaName())
                     .append("\n")
                     .append(meal.getMenu())
@@ -202,7 +203,7 @@ public class MealService {
         return sb.toString().trim();
     }
 
-    // 메뉴가 존재하는 Meal 목록을 식당 이름 기준으로 Map으로 변환
+    // 학식 메뉴를 식당 이름 기준으로 Map으로 변환
     private Map<String, String> buildMenuByCafeteriaName(List<Meal> meals) {
         return meals.stream()
                 .filter(meal -> meal.getMenu() != null && !meal.getMenu().isBlank())

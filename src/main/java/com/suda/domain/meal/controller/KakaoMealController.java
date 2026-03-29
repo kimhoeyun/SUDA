@@ -25,7 +25,7 @@ public class KakaoMealController {
         try {
             List<MealDto> meals = mealService.getMealsByDay(utterance);
 
-            String responseText = mealService.buildResponseText(meals, " 학식 메뉴입니다 🍱");
+            String responseText = mealService.buildResponseText(meals);
             return KakaoSkillResponse.simpleText(responseText);
 
         } catch (IllegalArgumentException e) {
@@ -45,7 +45,7 @@ public class KakaoMealController {
             List<MealResponseDto> todayMeals = mealService.getTodayMealsAsDto();
 
             // 카카오 형식의 응답값 생성
-            String responseText = mealService.buildResponseText(todayMeals, " 오늘의 학식입니다 🍱");
+            String responseText = mealService.buildResponseText(todayMeals);
 
             return KakaoSkillResponse.simpleText(responseText);
         } catch (IllegalStateException e) {
