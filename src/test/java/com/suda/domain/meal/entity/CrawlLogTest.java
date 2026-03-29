@@ -2,6 +2,7 @@ package com.suda.domain.meal.entity;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.suda.domain.meal.service.ScheduledMealCrawlResult;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
@@ -13,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CrawlLogTest {
 
+    @DisplayName("스케줄 학식 크롤링 결과로 CrawlLog를 생성하면, 각 필드가 매핑되고 오류 목록은 JsonNode 배열로 변환된다")
     @Test
     void constructor_mapsScheduledMealCrawlResultFieldsAndConvertsErrorsToJsonNode() {
         LocalDateTime executedAt = LocalDateTime.of(2026, 3, 28, 10, 30);

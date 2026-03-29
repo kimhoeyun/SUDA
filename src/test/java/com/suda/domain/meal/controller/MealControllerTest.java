@@ -2,6 +2,7 @@ package com.suda.domain.meal.controller;
 
 import com.suda.domain.meal.service.ScheduledMealCrawlResult;
 import com.suda.domain.meal.service.ScheduledMealCrawlService;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -24,6 +25,7 @@ class MealControllerTest {
     @MockitoBean
     private ScheduledMealCrawlService scheduledMealCrawlService;
 
+    @DisplayName("학식 크롤링 저장 요청을 보내면, 크롤링 결과가 응답으로 반환된다")
     @Test
     void crawlAndSaveMeals_returnsScheduledMealCrawlResult() throws Exception {
         when(scheduledMealCrawlService.crawlAndSaveMealsSafely()).thenReturn(
