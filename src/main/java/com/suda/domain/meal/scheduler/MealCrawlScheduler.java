@@ -11,7 +11,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.support.CronExpression;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
+import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -20,8 +20,15 @@ import java.util.UUID;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@ConditionalOnProperty(prefix = "app.meal-crawl", name = "enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(
+        prefix = "app.meal-crawl",
+        name = "enabled",
+        havingValue = "true",
+        matchIfMissing = true
+)
 public class MealCrawlScheduler {
+
+    private static final String TRIGGER_TYPE = "SCHEDULED";
 
     private final ScheduledMealCrawlService scheduledMealCrawlService;
 
@@ -31,57 +38,94 @@ public class MealCrawlScheduler {
     @Value("${app.meal-crawl.zone:Asia/Seoul}")
     private String zone;
 
-    @Value("${app.meal-crawl.enabled:true}")
-    private boolean enabled;
-
     @PostConstruct
     public void logSchedulerConfiguration() {
         log.info(
-                "Meal crawl scheduler initialized. enabled={}, cron={}, zone={}, nextFireTime={}",
-                enabled,
+                "Meal crawl scheduler initialized. triggerType={}, cron={}, zone={}, nextFireTime={}",
+                TRIGGER_TYPE,
                 cronExpression,
                 zone,
                 resolveNextFireTime()
         );
     }
 
-    @Scheduled(cron = "${app.meal-crawl.cron:0 0 10 * * MON}", zone = "${app.meal-crawl.zone:Asia/Seoul}")
+    @Scheduled(
+            cron = "${app.meal-crawl.cron:0 0 10 * * MON}",
+            zone = "${app.meal-crawl.zone:Asia/Seoul}"
+    )
     public void crawlWeeklyMeals() {
-        String runId = UUID.randomUUID().toString();
-        LocalDateTime now = LocalDateTime.now(ZoneId.of(zone));
-        log.info("Weekly meal crawl started. runId={}, startedAt={}, zone={}, cron={}", runId, now, zone, cronExpression);
+        final String runId = UUID.randomUUID().toString();
+        final ZoneId zoneId = ZoneId.of(zone);
+        final ZonedDateTime startedAt = ZonedDateTime.now(zoneId);
+
+        log.info(
+                "Weekly meal crawl started. triggerType={}, runId={}, startedAt={}, zone={}, cron={}",
+                TRIGGER_TYPE,
+                runId,
+                startedAt,
+                zone,
+                cronExpression
+        );
 
         try {
             ScheduledMealCrawlResult result = scheduledMealCrawlService.crawlAndSaveMealsSafely();
+
             if (result.success()) {
                 log.info(
-                        "Weekly meal crawl completed. runId={}, collectedMeals={}, savedMeals={}, attemptedTargets={}, succeededTargets={}",
+                        "Weekly meal crawl completed successfully. triggerType={}, runId={}, startedAt={}, collectedMeals={}, savedMeals={}, attemptedTargets={}, succeededTargets={}, errorCount={}",
+                        TRIGGER_TYPE,
                         runId,
+                        startedAt,
                         result.collectedMeals(),
                         result.savedMeals(),
                         result.attemptedTargets(),
-                        result.succeededTargets()
+                        result.succeededTargets(),
+                        countErrors(result.errors())
                 );
                 return;
             }
 
             log.warn(
-                    "Weekly meal crawl skipped DB write. runId={}, reason={}, collectedMeals={}, attemptedTargets={}, succeededTargets={}, errors={}",
+                    "Weekly meal crawl completed without DB write. triggerType={}, runId={}, startedAt={}, reason={}, collectedMeals={}, attemptedTargets={}, succeededTargets={}, errorCount={}, errors={}",
+                    TRIGGER_TYPE,
                     runId,
+                    startedAt,
                     result.reason(),
                     result.collectedMeals(),
                     result.attemptedTargets(),
                     result.succeededTargets(),
+                    countErrors(result.errors()),
                     summarizeErrors(result.errors())
             );
         } catch (Exception e) {
-            log.error("Weekly meal crawl failed. runId={}", runId, e);
+            log.error(
+                    "Weekly meal crawl failed. triggerType={}, runId={}, startedAt={}, zone={}, cron={}",
+                    TRIGGER_TYPE,
+                    runId,
+                    startedAt,
+                    zone,
+                    cronExpression,
+                    e
+            );
+        } finally {
+            ZonedDateTime finishedAt = ZonedDateTime.now(zoneId);
+            long tookMs = Duration.between(startedAt, finishedAt).toMillis();
+
+            log.info(
+                    "Weekly meal crawl finished. triggerType={}, runId={}, finishedAt={}, tookMs={}, zone={}",
+                    TRIGGER_TYPE,
+                    runId,
+                    finishedAt,
+                    tookMs,
+                    zone
+            );
         }
     }
 
     private String resolveNextFireTime() {
         try {
-            ZonedDateTime now = ZonedDateTime.now(ZoneId.of(zone));
+            ZoneId zoneId = ZoneId.of(zone);
+            ZonedDateTime now = ZonedDateTime.now(zoneId);
             ZonedDateTime next = CronExpression.parse(cronExpression).next(now);
             return next == null ? "N/A" : next.toString();
         } catch (Exception e) {
@@ -90,15 +134,22 @@ public class MealCrawlScheduler {
         }
     }
 
+    private int countErrors(List<String> errors) {
+        return errors == null ? 0 : errors.size();
+    }
+
     private String summarizeErrors(List<String> errors) {
         if (errors == null || errors.isEmpty()) {
             return "[]";
         }
+
         int maxSize = Math.min(errors.size(), 3);
         List<String> summary = errors.subList(0, maxSize);
+
         if (errors.size() > maxSize) {
             return summary + " ... +" + (errors.size() - maxSize) + " more";
         }
+
         return summary.toString();
     }
 }
