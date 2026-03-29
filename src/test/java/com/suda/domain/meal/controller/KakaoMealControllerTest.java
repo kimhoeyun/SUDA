@@ -1,6 +1,7 @@
 package com.suda.domain.meal.controller;
 
 import com.suda.domain.meal.service.MealService;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -22,6 +23,7 @@ class KakaoMealControllerTest {
     @MockitoBean
     private MealService mealService;
 
+    @DisplayName("오늘 학식 조회 중 MealService가 IllegalStateException을 던지면, 예외 메시지를 simpleText로 반환한다")
     @Test
     void getTodayMeals_whenMealServiceThrowsIllegalStateException_returnsSimpleText() throws Exception {
         when(mealService.getTodayMealsAsDto()).thenThrow(new IllegalStateException("학식 정보가 아직 업데이트되지 않았습니다."));
@@ -32,6 +34,7 @@ class KakaoMealControllerTest {
                         .value("학식 정보가 아직 업데이트되지 않았습니다."));
     }
 
+    @DisplayName("요일별 학식 조회 중 MealService가 IllegalStateException을 던지면, 예외 메시지를 simpleText로 반환한다")
     @Test
     void getMealsByDay_whenMealServiceThrowsIllegalStateException_returnsSimpleText() throws Exception {
         when(mealService.getMealsByDay("월요일 학식 알려줘"))
@@ -51,6 +54,7 @@ class KakaoMealControllerTest {
                         .value("등록된 학식 정보가 없습니다."));
     }
 
+    @DisplayName("요일 없는 학식 조회 요청으로 MealService가 IllegalArgumentException을 던지면, 요일 입력 안내 메시지를 반환한다")
     @Test
     void getMealsByDay_whenMealServiceThrowsIllegalArgumentException_returnsGuideMessage() throws Exception {
         when(mealService.getMealsByDay("학식 알려줘"))

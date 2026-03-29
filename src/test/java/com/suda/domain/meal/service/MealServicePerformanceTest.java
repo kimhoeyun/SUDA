@@ -8,6 +8,7 @@ import com.suda.global.autocrawl.MealTarget;
 import jakarta.persistence.EntityManager;
 import net.ttddyy.dsproxy.support.ProxyDataSourceBuilder;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -56,6 +57,7 @@ class MealServicePerformanceTest {
         QueryCounter.reset();
     }
 
+    @DisplayName("기존 조회 방식과 리팩터링 조회 방식의 쿼리 수를 비교하면, 리팩터링 조회 방식의 쿼리 수가 더 적다")
     @Test
     void compareLegacyAndRefactoredQueryCounts() {
         Measurement legacy = measure(() -> mealService.getMealsByDay_legacy("월요일 학식 알려줘"));
@@ -69,6 +71,7 @@ class MealServicePerformanceTest {
         assertThat(refactored.queryCount()).isLessThan(legacy.queryCount());
     }
 
+    @DisplayName("식당 수가 달라지는 환경에서 기존 조회 방식과 리팩터링 조회 방식의 쿼리 수를 비교하면, 리팩터링 조회 방식의 쿼리 수가 더 적다")
     @ParameterizedTest
     @ValueSource(ints = {5, 10, 50, 100, 500})
     void compareQueryCountsByCafeteriaSize(int cafeteriaCount) {
