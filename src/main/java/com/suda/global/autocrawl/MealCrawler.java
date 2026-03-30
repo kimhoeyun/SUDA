@@ -95,8 +95,21 @@ public class MealCrawler {
 
     private List<MealDto> fetchMealsForTarget(Document doc, MealTarget target) {
         Element table = doc.selectFirst(target.getCssSelector());
+
+        log.info("selector={}", target.getCssSelector());
+        log.info("table exists={}", table != null);
+        log.info("table html={}", table != null ? table.outerHtml() : "null");
+
         if (table == null) {
             throw new IllegalStateException("테이블 없음: " + target.getCafeteriaName());
+        }
+
+        Elements debugTrs = table.select("tr");
+        log.info("tr count={}", debugTrs.size());
+
+        for (int i = 0; i < debugTrs.size(); i++) {
+            Elements tds = debugTrs.get(i).select("td, th");
+            log.info("row={}, tdCount={}, text={}", i, tds.size(), debugTrs.get(i).text());
         }
 
         Elements trs = table.select("tbody > tr");
