@@ -27,6 +27,8 @@ public class MealCrawler {
     private static final String HTML_SPACE = "&nbsp;";
     private static final String BR_TOKEN = "__SUDA_BR__";
     private static final String COMMON_SIDE_DISH_PATTERN = "(?<=\\S)\\s+\\(공통찬\\)";
+    private static final String SELECTED_MENU_PATTERN = "\\h*<선택식>(?:\\h*\\R\\h*|\\h+)?";
+    private static final String COMMON_MENU_PATTERN = "(?:\\h*\\R\\h*)*\\h*<공통식>(?:\\h*\\R\\h*|\\h+)?";
     private static final List<String> MEAL_URLS = List.of(URL1, URL2);
 
     public List<MealDto> fetchAllMeals() {
@@ -165,7 +167,20 @@ public class MealCrawler {
         return normalizeSpecialMenuText(result).trim();
     }
 
-    static String normalizeSpecialMenuText(String text) {
-        return text.replaceAll(COMMON_SIDE_DISH_PATTERN, "\n(공통찬)");
+    public static String normalizeSpecialMenuText(String text) {
+        if (text == null || text.isBlank()) {
+            return "";
+        }
+
+        String normalized = text
+                .replace("\r\n", "\n")
+                .replace("\r", "\n")
+                .replaceAll(SELECTED_MENU_PATTERN, "<선택식>\n")
+                .replaceAll(COMMON_MENU_PATTERN, "\n\n<공통식>\n")
+                .replaceAll(COMMON_SIDE_DISH_PATTERN, "\n(공통찬)")
+                .replaceAll("(?m)[\\t\\x0B\\f ]+$", "")
+                .replaceAll("\\n{3,}", "\n\n");
+
+        return normalized.trim();
     }
 }

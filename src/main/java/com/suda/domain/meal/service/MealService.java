@@ -193,10 +193,12 @@ public class MealService {
         sb.append(today).append(MENU_MESSAGE).append("\n\n");
 
         meals.forEach(meal -> {
+            String normalizedMenu = MealCrawler.normalizeSpecialMenuText(meal.getMenu());
+
             sb.append("✅ ")
                     .append(meal.getCafeteriaName())
                     .append("\n")
-                    .append(meal.getMenu())
+                    .append(normalizedMenu)
                     .append("\n\n");
         });
 

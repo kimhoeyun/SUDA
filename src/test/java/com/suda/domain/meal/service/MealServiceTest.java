@@ -118,7 +118,7 @@ class MealServiceTest {
         assertEquals("돈까스", meals.get(0).getMenu());
         assertTrue(meals.stream()
                 .filter(meal -> !meal.getCafeteriaName().equals(MealTarget.STAFF_LECTURE_HALL.getCafeteriaName()))
-                .allMatch(meal -> meal.getMenu().equals("오늘 등록된 메뉴가 없습니다")));
+                .allMatch(meal -> meal.getMenu().equals("등록된 메뉴가 없습니다")));
     }
 
     @Test
@@ -145,6 +145,34 @@ class MealServiceTest {
         assertEquals(MealTarget.values().length, meals.size());
         assertEquals("제육볶음", meals.get(0).getMenu());
         assertFalse(meals.isEmpty());
+    }
+
+    @Test
+    @DisplayName("카카오 학식 응답 문자열을 생성하면 메뉴 섹션 태그에 맞춰 줄바꿈을 정리한다")
+    void buildResponseText_formatsSpecialMenuSections() {
+        List<MealResponseDto> meals = List.of(
+                MealResponseDto.builder()
+                        .dayOfWeek("월요일")
+                        .cafeteriaName("학생식단(아마랜스홀)")
+                        .menu("<선택식> 수제등심돈까스\n얼큰순대국\n아비코카레덮밥 <공통식> 온두부\n양배추샐러드&드레싱\n볶음김치")
+                        .build()
+        );
+
+        String responseText = mealService.buildResponseText(meals);
+
+        assertEquals("""
+                월요일학식 메뉴입니다 🍱
+
+                ✅ 학생식단(아마랜스홀)
+                <선택식>
+                수제등심돈까스
+                얼큰순대국
+                아비코카레덮밥
+
+                <공통식>
+                온두부
+                양배추샐러드&드레싱
+                볶음김치""", responseText);
     }
 
     private CrawlLog successLog() {
