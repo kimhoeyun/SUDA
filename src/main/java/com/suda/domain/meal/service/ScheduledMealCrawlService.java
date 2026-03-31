@@ -3,7 +3,9 @@ package com.suda.domain.meal.service;
 import com.suda.domain.cafeteria.entity.Cafeteria;
 import com.suda.domain.cafeteria.repository.CafeteriaRepository;
 import com.suda.domain.meal.dto.MealDto;
+import com.suda.domain.meal.entity.CrawlLog;
 import com.suda.domain.meal.entity.Meal;
+import com.suda.domain.meal.repository.CrawlLogRepository;
 import com.suda.domain.meal.repository.MealRepository;
 import com.suda.domain.meal.util.KoreanDayExtractor;
 import com.suda.global.autocrawl.MealCrawlReport;
@@ -13,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 @Service
@@ -21,24 +25,34 @@ public class ScheduledMealCrawlService {
 
     private final MealCrawler mealCrawler;
     private final MealRepository mealRepository;
+    private final CrawlLogRepository crawlLogRepository;
     private final CafeteriaRepository cafeteriaRepository;
     private final KoreanDayExtractor dayExtractor;
 
     @Transactional
     public ScheduledMealCrawlResult crawlAndSaveMealsSafely() {
         MealCrawlReport report = mealCrawler.fetchAllMealsWithReport();
+        ScheduledMealCrawlResult result;
 
+        // 크롤링 오류 발생
         if (report.hasErrors()) {
-            return ScheduledMealCrawlResult.failure(report, ScheduledMealCrawlResult.REASON_CRAWL_ERRORS);
+            result = ScheduledMealCrawlResult.failure(report, ScheduledMealCrawlResult.REASON_CRAWL_ERRORS);
+            crawlLogRepository.save(new CrawlLog(LocalDateTime.now(ZoneId.of("Asia/Seoul")), result));
+            return result;
         }
 
+        // 등록된 식단이 없는 경우
         if (!report.hasMeals()) {
-            return ScheduledMealCrawlResult.failure(report, ScheduledMealCrawlResult.REASON_EMPTY_RESULT);
+            result = ScheduledMealCrawlResult.failure(report, ScheduledMealCrawlResult.REASON_EMPTY_RESULT);
+            crawlLogRepository.save(new CrawlLog(LocalDateTime.now(ZoneId.of("Asia/Seoul")), result));
+            return result;
         }
 
         List<ResolvedMeal> resolvedMeals = resolveMeals(report.meals());
         int savedMeals = upsertMeals(resolvedMeals);
-        return ScheduledMealCrawlResult.success(report, savedMeals);
+        result = ScheduledMealCrawlResult.success(report, savedMeals);
+        crawlLogRepository.save(new CrawlLog(LocalDateTime.now(ZoneId.of("Asia/Seoul")), result));
+        return result;
     }
 
     private List<ResolvedMeal> resolveMeals(List<MealDto> mealDtos) {

@@ -5,10 +5,11 @@ import com.suda.domain.cafeteria.repository.CafeteriaRepository;
 import com.suda.domain.meal.dto.MealDto;
 import com.suda.domain.meal.dto.MealInfo;
 import com.suda.domain.meal.dto.MealResponseDto;
+import com.suda.domain.meal.entity.CrawlLog;
 import com.suda.domain.meal.entity.Meal;
+import com.suda.domain.meal.repository.CrawlLogRepository;
 import com.suda.domain.meal.repository.MealRepository;
 import com.suda.domain.meal.util.KoreanDayExtractor;
-import com.suda.global.autocrawl.MealCrawlReport;
 import com.suda.global.autocrawl.MealCrawler;
 import com.suda.global.autocrawl.MealTarget;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ public class MealService {
 
     private final MealRepository mealRepository;
     private final CafeteriaRepository cafeteriaRepository;
+    private final CrawlLogRepository crawlLogRepository;
     private final MealCrawler mealCrawler;
     private final KoreanDayExtractor dayExtractor;
     private static final String NO_MENU_MESSAGE = "오늘 등록된 메뉴가 없습니다";
@@ -81,19 +83,15 @@ public class MealService {
     // 요일별 학식 제공
     @Transactional(readOnly = true)
     public List<MealDto> getMealsByDay(String utterance) {
+
+        // 최신 크롤링 결과 검증
+        validateLatestCrawlSuccess();
+
         DayOfWeek dayOfWeek = dayExtractor.extract(utterance);
         String koreanDay = dayExtractor.toKorean(dayOfWeek);
 
         List<Meal> mealsByDay = mealRepository.findAllByDayOfWeek(dayOfWeek);
-
-        Map<String, String> menuByCafeteriaName = mealsByDay.stream()
-                .filter(meal -> meal.getMenu() != null && !meal.getMenu().isBlank())
-                .collect(Collectors.toMap(
-                        meal -> meal.getCafeteria().getName(),
-                        Meal::getMenu,
-                        (existing, replacement) -> existing,
-                        LinkedHashMap::new
-                ));
+        Map<String, String> menuByCafeteriaName = buildMenuByCafeteriaName(mealsByDay);
 
         return Arrays.stream(MealTarget.values())
                 .map(target -> {
@@ -140,42 +138,35 @@ public class MealService {
     }
 
 
-    // 오늘의 학식: 학식 정보 응답 dto 생성
+    // 오늘의 학식 정보 제공
     @Transactional(readOnly = true)
     public List<MealResponseDto> getTodayMealsAsDto() {
 
-        // 현재 요일 조회
+        // 최신 크롤링 결과 검증
+        validateLatestCrawlSuccess();
+
+        // 현재 요일 구하기
         DayOfWeek today = LocalDate.now(ZoneId.of("Asia/Seoul")).getDayOfWeek();
+        String koreanDay = dayExtractor.toKorean(today);
 
         // 주말인 경우 빈리스트 생성
         if (today == DayOfWeek.SATURDAY || today == DayOfWeek.SUNDAY) {
-            return List.of(); // 빈 리스트 반환
+            return List.of();
         }
 
-        // 현재 요일의 모든 Meal 조회
+        // 현재 요일의 식당별 메뉴 조회
         List<Meal> todayMeals = mealRepository.findAllByDayOfWeek(today);
+        // 식당 종류에 따라 메뉴 저장
+        Map<String, String> menuByCafeteriaName = buildMenuByCafeteriaName(todayMeals);
 
-        Map<String, String> menuByCafeteriaName = todayMeals.stream()
-                .filter(meal -> meal.getMenu() != null && !meal.getMenu().isBlank())
-                .collect(Collectors.toMap(
-                        m -> m.getCafeteria().getName(),
-                        Meal::getMenu,
-                        (existing, replacement) -> existing,
-                        LinkedHashMap::new
-                ));
-
-
-        String koreanDay = dayExtractor.toKorean(today);
+        // 응답 DTO 생성
         List<MealResponseDto> responses = new ArrayList<>();
-
         for (MealTarget target : MealTarget.values()) {
 
             String key = target.getCafeteriaName();
             String menu = menuByCafeteriaName.getOrDefault(key, "").trim();
 
-            // 학식 정보가 비어있는 경우
             if (menu.isBlank()) menu = NO_MENU_MESSAGE;
-
 
             responses.add(MealResponseDto.builder()
                     .cafeteriaName(key)
@@ -186,7 +177,7 @@ public class MealService {
         return responses;
     }
 
-    // 요일별 학식 응답 텍스트 포맷
+    // 학식 메뉴 응답 텍스트 포맷
     public String buildResponseText(List<? extends MealInfo> meals, String headerSuffix) {
 
         // 주말
@@ -211,6 +202,30 @@ public class MealService {
         return sb.toString().trim();
     }
 
+    // 메뉴가 존재하는 Meal 목록을 식당 이름 기준으로 Map으로 변환
+    private Map<String, String> buildMenuByCafeteriaName(List<Meal> meals) {
+        return meals.stream()
+                .filter(meal -> meal.getMenu() != null && !meal.getMenu().isBlank())
+                .collect(Collectors.toMap(
+                        meal -> meal.getCafeteria().getName(),
+                        Meal::getMenu,
+                        (existing, replacement) -> existing,
+                        LinkedHashMap::new
+                ));
+    }
 
+    private void validateLatestCrawlSuccess() {
+        CrawlLog latestCrawlLog = crawlLogRepository.findTopByOrderByExecutedAtDesc()
+                .orElseThrow(() -> new IllegalStateException(ScheduledMealCrawlResult.MESSAGE_CRAWL_ERRORS));
+
+        if (!latestCrawlLog.isSuccess()) {
+            String message = switch (latestCrawlLog.getReason()) {
+                case ScheduledMealCrawlResult.REASON_CRAWL_ERRORS -> ScheduledMealCrawlResult.MESSAGE_CRAWL_ERRORS;
+                case ScheduledMealCrawlResult.REASON_EMPTY_RESULT -> ScheduledMealCrawlResult.MESSAGE_EMPTY_RESULT;
+                default -> ScheduledMealCrawlResult.MESSAGE_UNKNOWN;
+            };
+            throw new IllegalStateException(message);
+        }
+    }
 
 }

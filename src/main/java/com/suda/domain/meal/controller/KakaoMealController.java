@@ -32,20 +32,25 @@ public class KakaoMealController {
             return KakaoSkillResponse.simpleText(
                     "요일을 포함해서 말씀해 주세요 😊\n예) 월요일 학식 알려줘"
             );
+        } catch (IllegalStateException e) {
+            return KakaoSkillResponse.simpleText(e.getMessage());
         }
     }
 
     // 오늘의 학식 제공 API
     @PostMapping("/today")
     public KakaoSkillResponse getTodayMeals() {
+        try {
+            // 식당별 오늘 학식 정보 조회
+            List<MealResponseDto> todayMeals = mealService.getTodayMealsAsDto();
 
-        // 오늘 학식 정보 조회
-        List<MealResponseDto> todayMeals = mealService.getTodayMealsAsDto();
+            // 카카오 형식의 응답값 생성
+            String responseText = mealService.buildResponseText(todayMeals, " 오늘의 학식입니다 🍱");
 
-        // 카카오 형식의 응답값 생성
-        String responseText = mealService.buildResponseText(todayMeals, " 오늘의 학식입니다 🍱");
-
-        return KakaoSkillResponse.simpleText(responseText);
+            return KakaoSkillResponse.simpleText(responseText);
+        } catch (IllegalStateException e) {
+            return KakaoSkillResponse.simpleText(e.getMessage());
+        }
     }
 
 
