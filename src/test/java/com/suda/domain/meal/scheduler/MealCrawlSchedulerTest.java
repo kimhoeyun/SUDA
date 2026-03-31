@@ -28,7 +28,6 @@ class MealCrawlSchedulerTest {
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(mealCrawlScheduler, "enabled", true);
         ReflectionTestUtils.setField(mealCrawlScheduler, "zone", "Asia/Seoul");
         ReflectionTestUtils.setField(mealCrawlScheduler, "cronExpression", "0 0 10 * * MON");
     }
@@ -61,3 +60,4 @@ class MealCrawlSchedulerTest {
         verify(scheduledMealCrawlService, times(1)).crawlAndSaveMealsSafely();
     }
 }
+
